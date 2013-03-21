@@ -1,0 +1,249 @@
+body {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  color: #808080;
+  font-size: 12px;
+  font-family: Arial, Helvetica,"メイリオ",Meiryo,"ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","HiraKakuPro-W3",">ＭＳ Ｐゴシック","MS PGothic",sans-serif;
+}
+
+/**
+ * header footer
+ **/
+#header {
+  width: 100%;
+  text-align: left;
+  font-size: 20px;
+  margin: 0px;
+  padding: 0px;
+  border-bottom: solid 2px #808080;
+}
+
+#header #ryu-logo {
+  width: 100px;
+  height: 50px;
+}
+
+#header #page-title {
+  font-weight: bold;
+  margin-left: 10px;
+  vertical-align: 15px;
+}
+
+#footer {
+  position: fixed;
+  right: 10px;
+  bottom: 5px;
+  color: #808080;
+  font-size: 12px;
+}
+
+
+/**
+ * main
+ **/
+#main {
+  width:100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+
+/**
+ * input form
+ */
+#jquery-ui-dialog-table {
+}
+#jquery-ui-dialog-table th , #jquery-ui-dialog-table td {
+  border: 1px solid gray;
+}
+#input-err-msg {
+  color: red;
+  display: none;
+}
+
+
+/**
+ * title bar
+ **/
+.titlebar {
+  font-size: 1.1em;  /* same to .ui-widget at jquery.ui.theme.css */
+  text-align: center;
+  margin: 0px;
+  padding: 0px;
+  -webkit-border-radius: 5px;
+  color: #000;
+  height: 15px;
+}
+
+/**
+ * Menu
+ **/
+#menu {
+  position: absolute;
+  top: 60px;
+  left: 5px;
+  width: 200px;
+  height: 200px;
+  text-align: left;
+  border: solid 1px #808080;
+  -webkit-border-radius: 5px;
+  background-color: #EEE;
+}
+#menu a {
+  text-decoration: none;
+}
+#menu .menu-item {
+  text-align: left;
+  width: 95%;
+  padding-left: 5%; /** width + padding-left = #demomenu.width **/
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin-top: 1px;
+  margin-bottom: 1px;
+  font-weight: bold;
+  color: #0070c0;
+  background-color: #EEE;
+  -webkit-border-radius: 5px;
+}
+
+
+/**
+ * topology
+ **/
+#topology {
+  position: absolute;
+  top: 60px;
+  left: 230px;
+  width: 600px;
+  height: 450px;
+  text-align: left;
+  border: solid 1px #808080;
+  color: #808080;
+  -webkit-border-radius: 5px;
+}
+
+
+/**
+ * link-list
+ **/
+#link-list {
+  position: absolute;
+  top: 310px;
+  left: 5px;
+  width: 200px;
+  height: 200px;
+  border: solid 1px #808080;
+  -webkit-border-radius: 5px;
+  text-align: left;
+  color: #808080;
+}
+#link-list-body {
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+  white-space: nowrap;
+  -webkit-border-radius: 5px;
+}
+
+/**
+#link-list p {
+  background-color: #0070c0;
+  font-weight:bold;
+  font-size: 15px;
+  margin: 10px 0px 0px 3px;
+  color: #FFF;
+}
+
+#link-list-item th {
+  border:0.25px solid #FFFFFF;
+  background-color:#483D8B;
+  color:#FFFFFF;
+  text-align:center;
+  font-weight:bold;
+  font-size: 12px;
+}
+
+#link-list-itme td {
+  border:0.25px solid #FFFFFF;
+  text-align:center;
+  background-color:#EEEEEE;
+  font-size: 12px;
+}
+**/
+/**
+ * flow-list
+ */
+#flow-list {
+  position: absolute;
+  top: 540px;
+  left: 5px;
+  width: 825px;
+  height: 200px;
+  text-align: left;
+  border: solid 1px #808080;
+  -webkit-border-radius: 5px;
+}
+#flow-list-body {
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+  white-space: nowrap;
+  -webkit-border-radius: 5px;
+}
+
+#flow-list-body p {
+  background-color: #0070c0;
+  font-weight:bold;
+  margin: 10px 0px 0px 3px;
+  font-size: 15px;
+  color: #FFF;
+}
+
+#flow-list-body table {
+  width: 100%;
+}
+
+#flow-list-body th, tr {
+  border:0.25px solid #FFFFFF;
+  font-size: 12px;
+  width: 100%;
+}
+
+#flow-list-body th {
+  background-color:#483D8B;
+  color:#FFFFFF;
+  font-weight:bold;
+  text-align: center;
+  border-bottom: 1px solid #808080;
+}
+
+#flow-list-body td {
+  border:0px solid #FFF;
+  border-bottom: 1px solid #808080;
+  background-color:#FBFFFF;
+  color: #808080;
+  font-size: 12px;
+}
+
+#flow-list-body .flow {
+  width: 100%;
+}
+#flow-list-body .match {
+  width: 100%;
+  background-color:#FF0000;
+  color: #FFFFFF;
+}
+#flow-list-body .mod {
+  width: 100%;
+  background-color:#FFFFA4;
+}
+#flow-list-body .del {
+  width: 100%;
+  background-color:#555555;
+}
+#flow-list-body .warn {
+  color: red;
+}
