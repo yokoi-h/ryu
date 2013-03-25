@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block head %}
+<script type="text/javascript">
+  var ws = new WebSocket("ws://{{ host }}:{{ port }}/websocket");
+  ws.onmessage = function(ev) {
+    websocket.onmessage(ev.data);
+  };
+
+  jsPlumb.ready(function(){
+    disp.input.host = "{{ host }}";
+    disp.input.port = "{{ port }}";
+    topo.setInput("{{ host }}", "{{ port }}");
+    topo.registo_handler();
+    topo.init();
+  });
+</script>
+{% endblock%}
+
+{% block body %}
+
+<div id="jquery-ui-dialog" title="Connect to controller.">
+  <form>
+  <fieldset>
+    <p>Enter the host and port of the controller to begin.</p>
+      <label for="jquery-ui-dialog-form-host">host</label>
+      <input type="text" name="jquery-ui-dialog-form-host" id="jquery-ui-dialog-form-host" class="text ui-widget-content ui-corner-all" />
+    </p>
+    <p>
+      <label for="jquery-ui-dialog-form-port">port</label>
+      <input type="text" name="jquery-ui-dialog-form-port" id="jquery-ui-dialog-form-port" class="text ui-widget-content ui-corner-all" />
+    </p>
+    <p id="input-err-msg"></p>
+  </fieldset>
+  </form>
+</div>
+
+<div id="link-list" class="ui-widget-content">
+    <p class="ui-widget-header titlebar">Link status</p>
+    <div id="link-list-body"></div>
+</div>
+
+<div id="flow-list" class="ui-widget-content">
+    <div class="ui-widget-header titlebar">Flow entries</div>
+    <div id="flow-list-body"></div>
+</div>
+
+<div id="topology" class="ui-widget-content"></div>
+
+<div id="menu">
+  <div class="ui-widget-header titlebar">Menu</div>
+  <div id="menu-body">
+    <a href="javascript:void(0);"><div id="jquery-ui-dialog-opener" class="menu-item">connect to controller</div></a>
+  </div>
+</div>
+{% endblock %}
