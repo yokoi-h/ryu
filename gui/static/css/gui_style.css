@@ -1,11 +1,23 @@
+* {
+  color: #808080;
+  font-size: 12px;
+}
+html {
+  width: 100%;
+  height: 100%;
+}
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
   text-align: center;
-  color: #808080;
-  font-size: 12px;
   font-family: Arial, Helvetica,"メイリオ",Meiryo,"ヒラギノ角ゴ Pro W3","Hiragino Kaku Gothic Pro","HiraKakuPro-W3",">ＭＳ Ｐゴシック","MS PGothic",sans-serif;
 }
+body a {
+  text-decoration: none;
+}
+
 
 /**
  * header footer
@@ -28,6 +40,7 @@ body {
   font-weight: bold;
   margin-left: 10px;
   vertical-align: 15px;
+  font-size: 20px;
 }
 
 #footer {
@@ -36,6 +49,7 @@ body {
   bottom: 5px;
   color: #808080;
   font-size: 12px;
+  z-index: 100px;
 }
 
 
@@ -43,9 +57,8 @@ body {
  * main
  **/
 #main {
-  width:100%;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  width: 100%;
+  height: 100%;
 }
 
 
@@ -60,42 +73,83 @@ body {
 #input-err-msg {
   color: red;
   display: none;
+  -webkit-border-radius: 5px;
 }
 
 
 /**
- * title bar
+ * contents
  **/
-.titlebar {
+.content {
+  position: absolute;
+  border: solid 1px #808080;
+  color: #808080;
+  -webkit-border-radius: 5px;
+}
+.content .content-title {
+  height: 5%;
+  min-height: 15px;
   font-size: 1.1em;  /* same to .ui-widget at jquery.ui.theme.css */
   text-align: center;
   margin: 0px;
   padding: 0px;
   -webkit-border-radius: 5px;
-  color: #000;
-  height: 15px;
 }
+.content .content-body{
+  overflow: auto;
+  width: 100%;
+  height: 90%;
+  white-space: nowrap;
+  -webkit-border-radius: 5px;
+}
+.content .content-end {
+  width: 100%;
+  height: 5%;
+  -webkit-border-radius: 5px;
+}
+.content .looking {
+  margin-left: 5px;
+}
+
+
+/**
+ * list table
+ **/
+.content-body table {
+  width: 100%;
+  border-collapse:separate;
+  border-spacing:2px;
+}
+.content-body table th {
+  border:0.25px solid #FFFFFF;
+  background-color: #0070c0;
+  color: #FFF;
+  text-align: center;
+  font-weight: bold;
+}
+.content-body table td {
+  border:0.25px solid #FFFFFF;
+  background-color: #EEEEEE;
+}
+
 
 /**
  * Menu
  **/
 #menu {
-  position: absolute;
   top: 60px;
   left: 5px;
   width: 200px;
   height: 200px;
   text-align: left;
-  border: solid 1px #808080;
-  -webkit-border-radius: 5px;
   background-color: #EEE;
+  z-index: 100;
 }
-#menu a {
-  text-decoration: none;
+#menu .content-body {
+  background-color: #EEE;
 }
 #menu .menu-item {
   text-align: left;
-  width: 95%;
   padding-left: 5%; /** width + padding-left = #demomenu.width **/
   padding-top: 1px;
   padding-bottom: 1px;
@@ -109,141 +163,66 @@ body {
 
 
 /**
- * topology
- **/
-#topology {
-  position: absolute;
-  top: 60px;
-  left: 230px;
-  width: 600px;
-  height: 450px;
-  text-align: left;
-  border: solid 1px #808080;
-  color: #808080;
-  -webkit-border-radius: 5px;
-}
-
-
-/**
  * link-list
  **/
 #link-list {
-  position: absolute;
   top: 310px;
   left: 5px;
   width: 200px;
   height: 200px;
-  border: solid 1px #808080;
-  -webkit-border-radius: 5px;
   text-align: left;
-  color: #808080;
 }
-#link-list-body {
-  position: relative;
-  overflow: auto;
-  width: 100%;
-  height: 100%;
-  white-space: nowrap;
-  -webkit-border-radius: 5px;
+#link-list td {
+  text-align: center;
 }
-
-/**
-#link-list p {
-  background-color: #0070c0;
-  font-weight:bold;
-  font-size: 15px;
-  margin: 10px 0px 0px 3px;
-  color: #FFF;
+#link-list .peer-port-name {
+}
+#link-list .peer-switch-name {
+  padding-left: 5px;
 }
 
-#link-list-item th {
-  border:0.25px solid #FFFFFF;
-  background-color:#483D8B;
-  color:#FFFFFF;
-  text-align:center;
-  font-weight:bold;
-  font-size: 12px;
-}
 
-#link-list-itme td {
-  border:0.25px solid #FFFFFF;
-  text-align:center;
-  background-color:#EEEEEE;
-  font-size: 12px;
-}
-**/
 /**
  * flow-list
  */
 #flow-list {
-  position: absolute;
   top: 540px;
   left: 5px;
   width: 825px;
   height: 200px;
   text-align: left;
-  border: solid 1px #808080;
-  -webkit-border-radius: 5px;
 }
-#flow-list-body {
+
+/**
+ * Topology
+ **/
+#topology {
+  top: 60px;
+  left: 230px;
+  width: 600px;
+  height: 450px;
+}
+#topology .switch img {
+  z-index: 2
+}
+#topology .switch-label {
   position: relative;
-  overflow: auto;
-  width: 100%;
-  height: 100%;
-  white-space: nowrap;
-  -webkit-border-radius: 5px;
-}
-
-#flow-list-body p {
-  background-color: #0070c0;
   font-weight:bold;
-  margin: 10px 0px 0px 3px;
-  font-size: 15px;
-  color: #FFF;
-}
-
-#flow-list-body table {
-  width: 100%;
-}
-
-#flow-list-body th, tr {
-  border:0.25px solid #FFFFFF;
-  font-size: 12px;
-  width: 100%;
-}
-
-#flow-list-body th {
-  background-color:#483D8B;
-  color:#FFFFFF;
-  font-weight:bold;
+  background-color: red;
+  color: white;
   text-align: center;
-  border-bottom: 1px solid #808080;
+  border: 0px solid #FFF;
+  height: 15px;
+  z-index: 3
 }
-
-#flow-list-body td {
-  border:0px solid #FFF;
-  border-bottom: 1px solid #808080;
-  background-color:#FBFFFF;
-  color: #808080;
-  font-size: 12px;
-}
-
-#flow-list-body .flow {
-  width: 100%;
-}
-#flow-list-body .match {
-  width: 100%;
-  background-color:#FF0000;
-  color: #FFFFFF;
-}
-#flow-list-body .mod {
-  width: 100%;
-  background-color:#FFFFA4;
-}
-#flow-list-body .del {
-  width: 100%;
-  background-color:#555555;
-}
-#flow-list-body .warn {
-  color: red;
+#topology .port-no {
+  -webkit-border-radius: 10px;
+  text-align: center;
+  font-weight:bold;
+  background-color: #E6FFE9;
+  border: 1px solid #808080;
+  width: 14px;
+  height: 14px;
+  z-index: 4;
+  margin: auto auto;
 }
