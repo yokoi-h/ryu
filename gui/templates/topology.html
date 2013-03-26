@@ -34,22 +34,40 @@
   </form>
 </div>
 
-<div id="link-list" class="ui-widget-content">
-    <p class="ui-widget-header titlebar">Link status</p>
-    <div id="link-list-body"></div>
+<div id="looking-switch" hidden>0</div>
+<div id="link-list" class="ui-widget-content content">
+  <div class="ui-widget-header content-title">Link status<span class="looking"></span>
 </div>
-
-<div id="flow-list" class="ui-widget-content">
-    <div class="ui-widget-header titlebar">Flow entries</div>
-    <div id="flow-list-body"></div>
-</div>
-
-<div id="topology" class="ui-widget-content"></div>
-
-<div id="menu">
-  <div class="ui-widget-header titlebar">Menu</div>
-  <div id="menu-body">
-    <a href="javascript:void(0);"><div id="jquery-ui-dialog-opener" class="menu-item">connect to controller</div></a>
+  <div id="link-list-body" class="content-body">
+    <table id="link-list-table">
+      <tr class="content-table-title">
+        <th class="port-no">no</th>
+        <th class="port-name">name</th>
+        <th class="port-peer">peer</th>
+      </tr>
+    </table>
   </div>
+  <div class="content-end"></div>
+</div>
+
+<div id="flow-list" class="ui-widget-content content">
+  <div class="ui-widget-header content-title">Flow entries<span class="looking"></span></div>
+  <div id="flow-list-body" class="content-body">
+    <table class="flow-list-table">
+    </table>
+  </div>
+  <div class="end-of-content" class="content-end"></div>
+</div>
+
+<div id="topology" class="ui-widget-content content"></div>
+
+<div id="menu" class="ui-widget-content content">
+  <div class="ui-widget-header content-title">Menu</div>
+  <div id="menu-body" class="content-body">
+    <a href="javascript:void(0);"><div id="jquery-ui-dialog-opener" class="menu-item">connect to controller</div></a>
+    <a href="javascript:void(0)"><div id="menu-flow-entries" class="menu-item">Flow entries</div></a>
+    <a href="javascript:void(0);"><div id="menu-link-status" class="menu-item">Link status</div></a>
+  </div>
+  <div class="content-end"></div>
 </div>
 {% endblock %}
