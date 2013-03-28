@@ -4,6 +4,7 @@ import json
 from flask import g, request
 
 import view_base
+from models import TopologyWatcher
 
 LOG = logging.getLogger('ryu.gui')
 
@@ -58,22 +59,39 @@ class WebsocketView(view_base.ViewBase):
     def __init__(self, ws):
         super(WebsocketView, self).__init__()
         self.ws = ws
-        self.discovery = None
+        self.watcher = TopologyWatcher(update_handler=self.update_handler,
+                        rest_error_handler=self.rest_error_handler)
 
     def run(self):
         LOG.info('Websocket: connected')
-        self.discovery = TopologyDiscovery(self.ws)
         while True:
             msg = self.ws.receive()
             if msg is not None:
                 self._received(msg)
             else:
-                self.discovery.is_active = False
+                self.watcher.stop()
                 break
 
         self.ws.close()
         LOG.info('Websocket: closed.')
         return self.null_response()
+
+    # called by watcher when topology update
+    def update_handler(self, address, delta):
+        [host, port] = address.split(':')
+
+        LOG.debug('added switches: %s' % delta.added['switches'])
+        LOG.debug('added ports: %s' % delta.added['ports'])
+        LOG.debug('added links: %s' % delta.added['links'])
+        LOG.debug('deleted switches: %s' % delta.deleted['switches'])
+        LOG.debug('deleted ports: %s' % delta.deleted['ports'])
+        LOG.debug('deleted links: %s' % delta.deleted['links'])
+
+    # called by watcher when rest api error
+    def rest_error_handler(self, address, e):
+        [host, port] = address.split(':')
+
+        LOG.debug('REST API Error: %s' % e)
 
     def _received(self, msg):
         LOG.debug('Websocket: received %s', msg)
@@ -86,28 +104,15 @@ class WebsocketView(view_base.ViewBase):
         event = ev.get('event')
         body = ev.get('body')
         if event == 'EventRestUrl':
-            self._connect_to_controller(body)
+            self._watcher_start(body)
         elif event == 'EventLookingSwitch':
             self.discovery.looking_switch = body.get('dpid')
         else:
             return
 
-    def _connect_to_controller(self, body):
-        host = body.get('host')
-        port = body.get('port')
-        err = None
-        if not (host and port):
-            err = 'Please note that all fields.'
-        elif not self.discovery.connect(host, port):
-            err = 'Could not connect to REST API.'
-
-        if err is not None:
-            ev = EventRestConnectErr()
-            ev.set_body(host=host, port=port, err=err)
-            self.discovery.send_event(ev)
-            return
-
-        self.discovery.start()
+    def _watcher_start(self, body):
+        address = '%s:%s' % (body['host'], body['port'])
+        self.watcher.start(address)
 
 
 class TopologyDiscovery(object):

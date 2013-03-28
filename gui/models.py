@@ -16,8 +16,11 @@
 import logging
 import json
 from socket import error as SocketError
+from httplib import HTTPException
 
 import gevent
+import gevent.monkey
+gevent.monkey.patch_all()
 
 from ryu.lib.dpid import str_to_dpid
 from ryu.lib.port_no import str_to_port_no
@@ -169,23 +172,53 @@ class TopologyDelta(object):
 
 
 class TopologyWatcher(object):
-    def __init__(self, address):
-        self.address = address
-        self.tc = TopologyClient(address)
+    _LOOP_WAIT = 3
+    _REST_RETRY_WAIT = 10
+
+    def __init__(self, update_handler=None, rest_error_handler=None):
+        self.update_handler = update_handler
+        self.rest_error_handler = rest_error_handler
+        self.address = None
+        self.tc = None
 
         self.threads = []
         self.topo = Topology()
         self.prev_switches_json = ''
         self.prev_links_json = ''
 
-        self.start()
-
-    def start(self):
+    def start(self, address):
+        LOG.debug('TopologyWatcher: start')
+        self.address = address
+        self.tc = TopologyClient(address)
         self.is_active = True
         self.threads.append(gevent.spawn(self._polling_loop))
 
     def stop(self):
+        LOG.debug('TopologyWatcher: stop')
         self.is_active = False
+
+    def _polling_loop(self):
+        LOG.debug('TopologyWatcher: Enter polling loop')
+        while self.is_active:
+            try:
+                switches_json = self.tc.list_switches().read()
+                links_json = self.tc.list_links().read()
+            except (SocketError, HTTPException) as e:
+                LOG.debug('TopologyWatcher: REST API(%s) is not avaliable. wait %d secs...' %
+                          (self.address, self._REST_RETRY_WAIT))
+                self._call_rest_error_handler(e)
+                gevent.sleep(self._REST_RETRY_WAIT)
+                continue
+
+            if self._is_updated(switches_json, links_json):
+                LOG.debug('TopologyWatcher: topology updated')
+                new_topo = Topology(switches_json, links_json)
+                delta = new_topo - self.topo
+                self.topo = new_topo
+                
+                self._call_update_handler(delta)
+
+            gevent.sleep(self._LOOP_WAIT)
 
     def _is_updated(self, switches_json, links_json):
         updated = (
@@ -197,29 +230,19 @@ class TopologyWatcher(object):
 
         return updated
 
-    def _polling_loop(self):
-        # print "# Enter polling loop"
-        while self.is_active:
-            try:
-                switches_json = self.tc.list_switches().read()
-                links_json = self.tc.list_links().read()
-            except SocketError as e:
-                print 'REST API(%s) is not avaliable. wait 10 secs...' % \
-                    (self.address)
-                gevent.sleep(10)
-                continue
+    def _call_rest_error_handler(self, e):
+        if self.rest_error_handler:
+            self.rest_error_handler(self.address, e)
 
-            if self._is_updated(switches_json, links_json):
-                print '## UPDATED'
-                new_topo = Topology(switches_json, links_json)
-                delta = new_topo - self.topo
-                self.topo = new_topo
+    def _call_update_handler(self, delta):
+        if self.update_handler:
+            self.update_handler(self.address, delta)
 
-                print delta
-
-            gevent.sleep(3)
-
+def handler(delta):
+    print delta
 
 if __name__ == '__main__':
-    watcher = TopologyWatcher('127.0.0.1:8080')
+    logging.basicConfig(level=logging.DEBUG)
+    watcher = TopologyWatcher(handler)
+    watcher.start('127.0.0.1:8080')
     gevent.joinall(watcher.threads)
