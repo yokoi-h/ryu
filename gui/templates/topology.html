@@ -2,14 +2,12 @@
 {% block head %}
 <script type="text/javascript">
   var ws = new WebSocket("ws://{{ host }}:{{ port }}/websocket");
-  ws.onmessage = function(ev) {
-    websocket.onmessage(ev.data);
+  ws.onmessage = function(msg) {
+    websocket.onMessage(msg.data);
   };
 
   jsPlumb.ready(function(){
-    disp.input.host = "{{ host }}";
-    disp.input.port = "{{ port }}";
-    topo.setInput("{{ host }}", "{{ port }}");
+    topo.setInput({host: "{{ host }}"});
     topo.registo_handler();
     topo.init();
   });
@@ -36,8 +34,7 @@
 
 <div id="looking-switch" hidden>0</div>
 <div id="link-list" class="ui-widget-content content">
-  <div class="ui-widget-header content-title">Link status<span class="looking"></span>
-</div>
+  <div class="ui-widget-header content-title">Link status<span class="looking"></span></div>
   <div id="link-list-body" class="content-body">
     <table id="link-list-table">
       <tr class="content-table-title">
@@ -50,23 +47,26 @@
   <div class="content-end"></div>
 </div>
 
-<div id="flow-list" class="ui-widget-content content">
+<div id="flow-list" class="ui-widget-content content" style="display: none;">
   <div class="ui-widget-header content-title">Flow entries<span class="looking"></span></div>
   <div id="flow-list-body" class="content-body">
-    <table class="flow-list-table">
+    <table id="flow-list-table">
     </table>
   </div>
   <div class="end-of-content" class="content-end"></div>
 </div>
 
-<div id="topology" class="ui-widget-content content"></div>
+<div id="topology" class="ui-widget-content content">
+  <div class="ui-widget-header content-title">Topology</div>
+  <div class="rest-status">Unconnected</div>
+</div>
 
 <div id="menu" class="ui-widget-content content">
   <div class="ui-widget-header content-title">Menu</div>
   <div id="menu-body" class="content-body">
     <a href="javascript:void(0);"><div id="jquery-ui-dialog-opener" class="menu-item">connect to controller</div></a>
-    <a href="javascript:void(0)"><div id="menu-flow-entries" class="menu-item">Flow entries</div></a>
     <a href="javascript:void(0);"><div id="menu-link-status" class="menu-item">Link status</div></a>
+    <a href="javascript:void(0)"><div id="menu-flow-entries" class="menu-item">Flow entries</div></a>
   </div>
   <div class="content-end"></div>
 </div>
