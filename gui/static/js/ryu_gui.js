@@ -270,12 +270,8 @@ var utils = {
   },
 
   _moveNode: function(id, position) {
-    var node_div = document.getElementById(id);
-    node_div.style.left = position.y;
-    node_div.style.top = position.x;
-
-    // jsPlumb reconnect
     var conn = jsPlumb.getConnections({souece: id});
+    // jsPlumb detach
     jsPlumb.detachAllConnections(id);
     var tmp = jsPlumb.getConnections({souece: id});
     for (var i in conn) {
@@ -287,9 +283,16 @@ var utils = {
       }
     }
 
-    for (var i in conn) {
-      utils._addConnect(conn[i].source, conn[i].target, conn[i].getOverlays()[0].getLabel());
-    }
+    // move to position
+    $("#" + id).animate(
+      {left: position.y, top: position.x},
+      300, 'swing', function(){
+        // jsPlumb reconnect
+        for (var i in conn) {
+          utils._addConnect(conn[i].source, conn[i].target, conn[i].getOverlays()[0].getLabel());
+        }
+      }
+    );
   },
 
   _delNode: function(id) {
