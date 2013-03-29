@@ -1,6 +1,6 @@
 var conf = {
   LABEL_FONT_SIZE: 10,
-  POSITION_RADII_SW: {"x": 100, "y": 100},
+  EVENT_LOOP_WAIT: 500,
   IMG_SW: {"x": 50, "y": 30, "img": "static/img/switch.png"},
   DEFAULT_REST_PORT: '8080',
   ID_PRE_SW: 'node-switch-',
@@ -9,9 +9,13 @@ var conf = {
 };
 
 
-var disp = {
+var _EVENTS = [];
+
+var _DATA = {
+  watching: '',
   input: {},
   switches: {},
+  links: {},
   timer: {}
 };
 
@@ -21,7 +25,7 @@ var disp = {
 //  topo
 ///////////////////////////////////
 var topo = {
-  registo_handler: function(){
+  registerHandler: function(){
     $('#jquery-ui-dialog').dialog({
       autoOpen: false,
       width: 450,
@@ -77,35 +81,42 @@ var topo = {
 
   init: function(){
     topo.setInput({'port': conf.DEFAULT_REST_PORT});
-    utils.restUnconnected();
+    utils.restDisconnected();
+    utils.event_loop();
     $('#jquery-ui-dialog').dialog('open');
   },
 
   setInput: function(input) {
-    if (typeof input.host !== "undefined") disp.input.host = input.host;
-    if (typeof input.port !== "undefined") disp.input.port = input.port;
-    if (typeof input.err !== "undefined") disp.input.err = input.err;
+    if (typeof input.host !== "undefined") _DATA.input.host = input.host;
+    if (typeof input.port !== "undefined") _DATA.input.port = input.port;
+    if (typeof input.err !== "undefined") _DATA.input.err = input.err;
   },
 
   openInputForm: function() {
-    if (disp.input.host) $('#jquery-ui-dialog-form-host').val(disp.input.host);
-    if (disp.input.port) $('#jquery-ui-dialog-form-port').val(disp.input.port);
-    if (disp.input.err) {
-      $("#input-err-msg").text(disp.input.err).css('display', 'block');
+    if (_DATA.input.host) $('#jquery-ui-dialog-form-host').val(_DATA.input.host);
+    if (_DATA.input.port) $('#jquery-ui-dialog-form-port').val(_DATA.input.port);
+    if (_DATA.input.err) {
+      $("#input-err-msg").text(_DATA.input.err).css('display', 'block');
     } else {
       $("#input-err-msg").css('display', 'none');
     }
   },
 
   restConnect: function() {
-//    alert("RestConnect " + host + ':' + port);
     var input = {};
     input.host = $('#jquery-ui-dialog-form-host').val();
     input.port = conf.DEFAULT_REST_PORT;
     if ($('#jquery-ui-dialog-form-port').val()) input.port = $('#jquery-ui-dialog-form-port').val();
+
+    // not changed
+    if (_DATA.input.host == input.host
+        && _DATA.input.port == input.port
+        && !_DATA.timer.restStatus) return;
+
     input.err = '';
     topo.setInput(input);
-    utils.restUnconnected();
+    _EVENTS = [];
+    utils.restDisconnected();
 
     // topology cleanup
     utils.topologyCleanup();
@@ -143,43 +154,52 @@ var topo = {
     }
   },
 
-  lookingSwitch: function(dpid) {
-    if (dpid == $("#looking-switch").text()) return;
+  watchingSwitch: function(dpid) {
     if (typeof dpid === "undefined") {
       dpid = "";
-    } else if (typeof disp.switches[dpid] === "undefined") {
+    } else if (typeof _DATA.switches[dpid] === "undefined") {
       return
     }
 
-    $("#looking-switch").text(dpid);
+    if (_DATA.timer.watingSwitch) clearInterval(_DATA.timer.watingSwitch)
+    if (dpid) {
+      _DATA.timer.watingSwitch = setInterval(function(){
+        $("#" + conf.ID_PRE_SW + dpid).fadeTo(500, 0.50).fadeTo(1000, 1)
+      }, 1500)
+    }
+    if (dpid == _DATA.watching) return;
+
+    _DATA.watching = dpid;
     utils.clearLinkList();
     utils.clearFlowList();
 
     if (dpid) {
-      var sw = disp.switches[dpid];
-      $(".content-title .looking").text(': ' + sw.name)
+      var sw = _DATA.switches[dpid];
       for (var i in sw.ports) utils.appendLinkList(sw.ports[i]);
-    } else {
-      $(".content-title .looking").text('')
     }
-    websocket.sendLookingSwitch(dpid);
+    websocket.sendWatchingSwitch(dpid);
   },
 
   redesignTopology: function(){
-    var x = $("#topology").height() / 2
-    var y = $("#topology").width() / 2
-
-    var radii = conf.POSITION_RADII_SW;
+    var base = {x: $("#topology").height() / 2,
+                y: $("#topology").width() / 2}
+    var radii = {x: $("#topology").height() / 4,
+                 y: $("#topology").width() / 4}
     var cnt = 0;
     var len = 0;
-    for (var i in disp.switches) len ++;
+    for (var i in _DATA.switches) len ++;
 
-    for (var i in disp.switches) {
-      var sw = disp.switches[i];
-      var position = utils._calTh(cnt, len, {'x': x, 'y': y}, radii);
+    for (var i in _DATA.switches) {
+      var sw = _DATA.switches[i];
+      var position = utils._calTh(cnt, len, base, radii);
       utils.addSwitch(sw, position)
       cnt ++;
     }
+  },
+
+  emMatchFlow: function(source, target) {
+      // TODO:
+      return;
   }
 };
 
@@ -188,22 +208,36 @@ var topo = {
 //  utils
 ///////////////////////////////////
 var utils = {
-  restUnconnected: function(host, port) {
-    $("#topology").find(".rest-status").css('color', 'red').text('Unconnected');
+  event_loop: function() {
+    if (_EVENTS.length) {
+      var ev = _EVENTS.shift();
+      if (ev.length == 1) ev[0]()
+      else ev[0](ev[1]);
+    }
+    setTimeout(utils.event_loop, conf.EVENT_LOOP_WAIT);
+  },
+
+  registerEvent: function(func, arg){
+    if (typeof arg === "undefined") _EVENTS.push([func])
+    else _EVENTS.push([func, arg])
+  },
+
+  restDisconnected: function(host, port) {
+    $("#topology").find(".rest-status").css('color', 'red').text('Disconnected');
     if (typeof host !== "undefined" && typeof port !== "undefined") {
       var rest = '<span class="rest-url">(' + host + ':' + port + ')</span>';
       $("#topology").find(".rest-status").append(rest);
     }
-    if (disp.timer.restStatus) return;
-    disp.timer.restStatus = setInterval(function(){
-      $("#topology").find(".rest-status").fadeOut(1500,function(){$(this).fadeIn(1500)});
-    },500);
+    if (_DATA.timer.restStatus) return;
+    _DATA.timer.restStatus = setInterval(function(){
+      $("#topology").find(".rest-status").fadeTo(1000, 0.25).fadeTo(1000, 1)
+    }, 1500)
   },
 
   restConnected: function(host, port) {
-    if (disp.timer.restStatus) {
-      clearInterval(disp.timer.restStatus);
-      disp.timer.restStatus = null;
+    if (_DATA.timer.restStatus) {
+      clearInterval(_DATA.timer.restStatus);
+      _DATA.timer.restStatus = null;
       $("#topology").find(".rest-status").css('color', '#808080').text('Connected');
       var rest = '<span class="rest-url">(' + host + ':' + port + ')</span>';
       $("#topology").find(".rest-status").append(rest);
@@ -231,7 +265,7 @@ var utils = {
     node_img.style.height = img.y;
 
     // jsPlumb drag
-    $(node_div).draggable({"containment": "parent"});
+//    $(node_div).draggable({"containment": "parent"});
     jsPlumb.draggable(node_div);
   },
 
@@ -241,22 +275,28 @@ var utils = {
     node_div.style.top = position.x;
 
     // jsPlumb reconnect
-    var points = jsPlumb.getEndpoints(id);
     var conn = jsPlumb.getConnections({souece: id});
-    for (var i in points) jsPlumb.deleteEndpoint(points[i]);
+    jsPlumb.detachAllConnections(id);
+    var tmp = jsPlumb.getConnections({souece: id});
     for (var i in conn) {
-      var label;
-      for (var j in conn[i].getOverlays()) {
-        label = conn[i].getOverlays()[j].getLabel();
-        break;
+      for (var j in tmp) {
+        if (conn[i].target == tmp[j].target) {
+          delete conn[i];
+          break;
+        }
       }
-      utils._addConnect(conn[i].source, conn[i].target, label);
+    }
+
+    for (var i in conn) {
+      utils._addConnect(conn[i].source, conn[i].target, conn[i].getOverlays()[0].getLabel());
     }
   },
 
   _delNode: function(id) {
     var points = jsPlumb.getEndpoints(id);
-    for (var i in points) jsPlumb.deleteEndpoint(points[i]);
+    for (var i in points) {
+      jsPlumb.deleteEndpoint(points[i]);
+    }
     $("#" + id).remove();
   },
 
@@ -270,8 +310,10 @@ var utils = {
     var img = conf.IMG_SW;
     utils._addNode(id, position, img, 'switch');
     var node_div = document.getElementById(id)
-    node_div.setAttribute("onClick","topo.lookingSwitch('" + sw.dpid + "')");
+    node_div.setAttribute("onClick","topo.watchingSwitch('" + sw.dpid + "')");
 
+    $(node_div).find("img").attr('title', "dpid: " + sw.dpid);
+/**
     var fontSize = conf.LABEL_FONT_SIZE;
     var label_div = document.createElement('div');
     label_div.className = "switch-label";
@@ -283,6 +325,7 @@ var utils = {
     var label_text = document.createTextNode(sw.name);
     label_div.appendChild(label_text);
     node_div.appendChild(label_div);
+**/
   },
 
   delSwitch: function(dpid) {
@@ -327,47 +370,43 @@ var utils = {
 
     var peer_td = tr.insertCell(-1);
     var peer_port_span = document.createElement('span');
-    var peer_switch_span = document.createElement('span');
     peer_td.className = 'port-peer';
     peer_port_span.className = 'peer-port-name';
-    peer_switch_span.className = 'peer-switch-name';
     peer_td.appendChild(peer_port_span);
-    peer_td.appendChild(peer_switch_span);
 
     var peer_port = '';
-    var peer_switch = '';
-    var peer = disp.switches[link.peer.dpid];
-    if (peer) {
-      if (peer.ports[link.peer.port_no]) {
-        peer_port = peer.ports[link.peer.port_no].name;
-        peer_switch = '(' + peer.name + ')';
+    if (link.peer) {
+      if (link.peer.dpid) {
+        var peer = _DATA.switches[link.peer.dpid];
+        if (peer) {
+          if (peer.ports[link.peer.port_no]) {
+            peer_port = peer.ports[link.peer.port_no].name;
+          }
+        }
       }
     }
-
     peer_port_span.innerHTML = peer_port;
-    peer_switch_span.innerHTML = peer_switch;
-
     utils._repainteRows('link-list-table');
   },
 
   modifyLinkList: function(p1, p2) {
-    var look;
+    var watching;
     var other;
-    if (p1.dpid == $("#looking-switch").text()) {
-      look = disp.switches[p1.dpid].ports[p1.port_no];
+    if (p1.dpid == _DATA.watching) {
+      watching = _DATA.switches[p1.dpid].ports[p1.port_no];
       other = p2;
-    } else if (p2.dpid == $("#looking-switch").text()) {
-      look = disp.switches[p2.dpid].ports[p2.port_no];
+    } else if (p2.dpid == _DATA.watching) {
+      watching = _DATA.switches[p2.dpid].ports[p2.port_no];
       other = p1;
     } else {
       return
     }
 
-    id = conf.ID_PRE_LINK_LIST + look.dpid + '-' + look.port_no;
+    id = conf.ID_PRE_LINK_LIST + watching.dpid + '-' + watching.port_no;
 
-    if (Number(look.peer.dpid) == Number(other.dpid)) {
-      var peer_switch = disp.switches[other.dpid].name;
-      var peer_port = disp.switches[other.dpid].ports[other.port_no].name;
+    if (Number(watching.peer.dpid) == Number(other.dpid)) {
+      var peer_switch = _DATA.switches[other.dpid].name;
+      var peer_port = _DATA.switches[other.dpid].ports[other.port_no].name;
       $("#" + id).find(".peer-port-name").text(peer_port);
       $("#" + id).find(".peer-switch-name").text('(' + peer_switch + ')');
     } else {
@@ -377,9 +416,9 @@ var utils = {
   },
 
   deleteLinkList: function(link) {
-    if (link.dpid != $("#looking-switch").text()) return;
+    if (link.dpid != _DATA.watching) return;
     var id = conf.ID_PRE_LINK_LIST + link.dpid + '-' + link.port_no;
-    $('#link-list tr').remove('#' + id);
+    $('#' + id).remove();
     utils._repainteRows('link-list-table');
   },
 
@@ -399,12 +438,16 @@ var utils = {
   },
 
   _addConnect: function(s, t, port_no) {
-    if (Number(port_no) < 1)  overlays = null;
-    else overlays = [["Label", {label: port_no + "", location: 0.15, cssClass: "port-no"}]];
+    var overlays = null;
+    if (Number(port_no) > 0) overlays = [["Label", {label: port_no + "",
+                                                    location: 0.15,
+                                                    cssClass: "port-no"}]];
 
+//    var connector = 'StateMachine';
     var connector = 'Straight';
+    var endpoint = 'Blank';
     var anchors = ["Center", "Center"];
-    var click = function(conn) { utils.emMatchFlow([conn.sourceId, conn.targetId]) }
+    var click = function(conn) { topo.emMatchFlow([conn.sourceId, conn.targetId]) }
     var paintStyle = {"lineWidth": 3,
                       "strokeStyle": '#35FF35',
                       "outlineWidth": 0.5,
@@ -413,6 +456,7 @@ var utils = {
 
     var conn = jsPlumb.connect({source: s,
                                 target: t,
+                                endpoint: endpoint,
                                 paintStyle: paintStyle,
                                 connector: connector,
                                 anchors: anchors,
@@ -432,7 +476,7 @@ var utils = {
   },
 
   replaceFlowList: function(dpid, flows){
-    if (dpid != $("#looking-switch").text()) return;
+    if (dpid != _DATA.watching) return;
     for (var i in flows) {
       var list_table = document.getElementById('flow-list-table');
       var tr = list_table.insertRow(-1);
@@ -447,8 +491,8 @@ var utils = {
   },
 
   topologyCleanup: function() {
-    topo.lookingSwitch();
-    disp.switches = {};
+    topo.watchingSwitch();
+    _DATA.switches = {};
     for (var i=0; i < $("#topology").find(".switch").length; i++) {
       var el = $("#topology").find(".switch")[i];
       jsPlumb.removeAllEndpoints(el);
@@ -470,28 +514,52 @@ var websocket = {
     var msg = JSON.parse(msg);
 
     // user already updated to URL
-    if (msg.host != disp.input.host || msg.port != disp.input.port) return;
+    if (msg.host != _DATA.input.host || msg.port != _DATA.input.port) return;
 
-    if (msg.message == 'rest_unconnected') {
-      utils.restUnconnected(msg.host, msg.port);
+    if (msg.message == 'rest_disconnected') {
+      utils.restDisconnected(msg.host, msg.port);
       return;
     }
 
     utils.restConnected(msg.host, msg.port);
-    if (msg.message == 'add_switch') {
-      websocket._addSwitch(msg.body);
-    } else if (msg.message == 'del_switch') {
-      websocket._delSwitch(msg.body);
-    } else if (msg.message == 'add_port') {
-      websocket._addPort(msg.body);
-    } else if (msg.message == 'del_port') {
-      websocket._delPort(msg.body);
-    } else if (msg.message == 'add_link') {
-      websocket._addLink(msg.body);
-    } else if (msg.message == 'del_link') {
-      websocket._delLink(msg.body);
+    if (msg.message == 'add_switches') {
+      for (var i in msg.body) {
+        utils.registerEvent(websocket._addSwitch, msg.body[i]);
+      };
+
+    } else if (msg.message == 'del_switches') {
+      for (var i in msg.body) {
+        utils.registerEvent(websocket._delSwitch, msg.body[i]);
+      };
+
+    } else if (msg.message == 'add_ports') {
+      utils.registerEvent(function(ports){
+        for (var i in ports) websocket._addPort(ports[i]);
+      }, msg.body)
+
+    } else if (msg.message == 'del_ports') {
+      utils.registerEvent(function(ports){
+        for (var i in ports) websocket._delPort(ports[i]);
+      }, msg.body)
+
+    } else if (msg.message == 'add_links') {
+      for (var i in msg.body) {
+        utils.registerEvent(websocket._addLink, msg.body[i]);
+      };
+//      utils.registerEvent(function(links){
+//        for (var i in links) websocket._addLink(links[i]);
+//      }, msg.body)
+
+    } else if (msg.message == 'del_links') {
+      for (var i in msg.body) {
+        utils.registerEvent(websocket._delLink, msg.body[i]);
+      };
+//      utils.registerEvent(function(links){
+//        for (var i in links) websocket._delLink(links[i]);
+//      }, msg.body)
+
     } else if (msg.message == 'replace_flows') {
-      websocket._replaceFlows(msg.body);
+      utils.registerEvent(websocket._replaceFlows, msg.body);
     } else {
       // unknown message
       return;
@@ -504,14 +572,15 @@ var websocket = {
   sendRestUpdate: function(host, port){
     var msg = {};
     msg.message = 'rest_update';
-    msg.host = host;
-    msg.port = port;
+    msg.body = {};
+    msg.body.host = host;
+    msg.body.port = port;
     websocket._sendMessage(msg);
   },
 
-  sendLookingSwitch: function(dpid){
+  sendWatchingSwitch: function(dpid){
     msg = {};
-    msg.message = "looking_switch_update";
+    msg.message = "watching_switch_update";
     msg.body = {};
     msg.body.dpid = dpid;
     websocket._sendMessage(msg);
@@ -521,34 +590,31 @@ var websocket = {
   // recive messages
   ////////////
   _addSwitch: function(body) {
-    if (body.dpid in disp.switches) return;
-    disp.switches[body.dpid] = body;
+    if (_DATA.switches[body.dpid]) return;
+    _DATA.switches[body.dpid] = body;
     topo.redesignTopology();
-    if ($("#looking-switch").text() == "") {
-      topo.lookingSwitch(body.dpid);
-    }
   },
 
   _delSwitch: function(body) {
-    if ($("#looking-switch").text() == body.dpid) topo.lookingSwitch();
+    if (_DATA.watching == body.dpid) topo.watchingSwitch();
 
     utils.delSwitch(body.dpid)
 
-    for (var s in disp.switches) {
-      for (var p in disp.switches[s].ports) {
-        var port = disp.switches[s].ports[p];
+    for (var s in _DATA.switches) {
+      for (var p in _DATA.switches[s].ports) {
+        var port = _DATA.switches[s].ports[p];
         if (port.peer.dpid == body.dpid) {
-          disp.switches[s].ports[p].peer = {};
+          _DATA.switches[s].ports[p].peer = {};
           utils.modifyLinkList(body, port);
         }
       }
     }
-    delete disp.switches[body.dpid]
+    delete _DATA.switches[body.dpid]
     topo.redesignTopology();
   },
 
   _addPort: function(body) {
-    if (disp.switches[body.dpid]) disp.switches[body.dpid].ports[body.port_no] = body;
+    if (_DATA.switches[body.dpid]) _DATA.switches[body.dpid].ports[body.port_no] = body;
     utils.appendLinkList(body);
   },
 
@@ -557,29 +623,29 @@ var websocket = {
     utils.deleteLinkList(body);
 
     // delete connect and memory
-    for (var s in disp.switches) {
-      for (var p in disp.switches[s].ports) {
-        var port = disp.switches[s].ports[p];
+    for (var s in _DATA.switches) {
+      for (var p in _DATA.switches[s].ports) {
+        var port = _DATA.switches[s].ports[p];
         if (port.peer.dpid == body.dpid && port.peer.port_no == body.port_no) {
           utils.delConnect(port, port.peer);
-          disp.switches[s].ports[p].peer = {};
+          _DATA.switches[s].ports[p].peer = {};
           break;
         }
       }
     }
-    delete disp.switches[body.dpid].ports[body.port_no];
+    delete _DATA.switches[body.dpid].ports[body.port_no];
   },
 
   _addLink: function(body) {
-    disp.switches[body.p1.dpid].ports[body.p1.port_no].peer = body.p2;
-    disp.switches[body.p2.dpid].ports[body.p2.port_no].peer = body.p1;
+    _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = body.p2;
+    _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = body.p1;
     utils.addConnect(body.p1, body.p2);
     utils.modifyLinkList(body.p1, body.p2);
   },
 
   _delLink: function(body) {
-    disp.switches[body.p1.dpid].ports[body.p1.port_no].peer = {};
-    disp.switches[body.p2.dpid].ports[body.p2.port_no].peer = {};
+    _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = {};
+    _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = {};
     utils.delConnect(body.p1, body.p2);
     utils.modifyLinkList(body.p1, body.p2);
   },

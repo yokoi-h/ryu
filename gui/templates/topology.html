@@ -8,7 +8,7 @@
 
   jsPlumb.ready(function(){
     topo.setInput({host: "{{ host }}"});
-    topo.registo_handler();
+    topo.registerHandler();
     topo.init();
   });
 </script>
@@ -19,7 +19,7 @@
 <div id="jquery-ui-dialog" title="Connect to controller.">
   <form>
   <fieldset>
-    <p>Enter the host and port of the controller to begin.</p>
+    <p>Enter the address of the controller to begin.</p>
       <label for="jquery-ui-dialog-form-host">host</label>
       <input type="text" name="jquery-ui-dialog-form-host" id="jquery-ui-dialog-form-host" class="text ui-widget-content ui-corner-all" />
     </p>
@@ -32,9 +32,8 @@
   </form>
 </div>
 
-<div id="looking-switch" hidden>0</div>
 <div id="link-list" class="ui-widget-content content">
-  <div class="ui-widget-header content-title">Link status<span class="looking"></span></div>
+  <div class="ui-widget-header content-title">Link status</div>
   <div id="link-list-body" class="content-body">
     <table id="link-list-table">
       <tr class="content-table-title">
@@ -48,7 +47,7 @@
 </div>
 
 <div id="flow-list" class="ui-widget-content content" style="display: none;">
-  <div class="ui-widget-header content-title">Flow entries<span class="looking"></span></div>
+  <div class="ui-widget-header content-title">Flow entries</div>
   <div id="flow-list-body" class="content-body">
     <table id="flow-list-table">
     </table>
