@@ -1,7 +1,6 @@
 import logging
 import gevent
 import json
-from flask import g, request
 
 import view_base
 from models import TopologyWatcher
@@ -9,65 +8,25 @@ from models import TopologyWatcher
 LOG = logging.getLogger('ryu.gui')
 
 
-class EventBase(dict):
-    def __init__(self):
-        super(EventBase, self).__init__()
-        self['event'] = self.__class__.__name__
-        self['body'] = {}
-
-    def set_body(self, **body):
-        for name, value in body.items():
-            self['body'][name] = value
-
-
-class EventAddSwitch(EventBase):
-    def __init__(self):
-        super(EventAddSwitch, self).__init__()
-
-
-class EventDelSwitch(EventBase):
-    def __init__(self):
-        super(EventDelSwitch, self).__init__()
-
-
-class EventAddPort(EventBase):
-    def __init__(self):
-        super(EventAddPort, self).__init__()
-
-
-class EventDelPort(EventBase):
-    def __init__(self):
-        super(EventDelPort, self).__init__()
-
-
-class EventAddLink(EventBase):
-    def __init__(self):
-        super(EventAddLink, self).__init__()
-
-
-class EventDelLink(EventBase):
-    def __init__(self):
-        super(EventDelLink, self).__init__()
-
-
-class EventRestConnectErr(EventBase):
-    def __init__(self):
-        super(EventRestConnectErr, self).__init__()
-
-
 class WebsocketView(view_base.ViewBase):
     def __init__(self, ws):
         super(WebsocketView, self).__init__()
         self.ws = ws
+        self.address = None
+        self.topo = {}
         self.watcher = TopologyWatcher(update_handler=self.update_handler,
                         rest_error_handler=self.rest_error_handler)
 
     def run(self):
-        LOG.info('Websocket: connected')
         while True:
             msg = self.ws.receive()
             if msg is not None:
-                self._received(msg)
+                try:
+                    msg = json.loads(msg)
+                except:
+                    LOG.debug("json parse error: %s", msg)
+                    continue
+                self._recv_message(msg)
             else:
                 self.watcher.stop()
                 break
@@ -76,144 +35,166 @@ class WebsocketView(view_base.ViewBase):
         LOG.info('Websocket: closed.')
         return self.null_response()
 
-    # called by watcher when topology update
-    def update_handler(self, address, delta):
-        [host, port] = address.split(':')
+#    def _send_message(self, msg_name, address, **body):
+    def _send_message(self, msg_name, address, body=None):
+        message = {}
+        message['message'] = msg_name
+        message['host'], message['port'] = address.split(':')
+        message['body'] = body
+        LOG.debug("Websocket: send msg.\n%s", json.dumps(message, indent=2))
+        self.ws.send(json.dumps(message))
 
-        LOG.debug('added switches: %s' % delta.added['switches'])
-        LOG.debug('added ports: %s' % delta.added['ports'])
-        LOG.debug('added links: %s' % delta.added['links'])
-        LOG.debug('deleted switches: %s' % delta.deleted['switches'])
-        LOG.debug('deleted ports: %s' % delta.deleted['ports'])
-        LOG.debug('deleted links: %s' % delta.deleted['links'])
+    def _recv_message(self, msg):
+        LOG.debug('Websocket: recv msg.\n%s', json.dumps(msg, indent=2))
 
-    # called by watcher when rest api error
-    def rest_error_handler(self, address, e):
-        [host, port] = address.split(':')
+        message = msg.get('message')
+        body = msg.get('body')
 
-        LOG.debug('REST API Error: %s' % e)
-
-    def _received(self, msg):
-        LOG.debug('Websocket: received %s', msg)
-        try:
-            ev = json.loads(msg)
-        except:
-            LOG.debug("json parse error: %s", msg)
-            return
-
-        event = ev.get('event')
-        body = ev.get('body')
-        if event == 'EventRestUrl':
+        if message == 'rest_update':
             self._watcher_start(body)
-        elif event == 'EventLookingSwitch':
-            self.discovery.looking_switch = body.get('dpid')
+        elif message == 'watching_switch_update':
+            self._watching_switch_update(body)
         else:
             return
 
     def _watcher_start(self, body):
         address = '%s:%s' % (body['host'], body['port'])
-        self.watcher.start(address)
+        self.address = address
+        if self.watcher.address != address:
+            self.topo = {}
+            self.watcher.stop()
+            self.watcher.start(address)
+
+    def _watching_switch_update(self, body):
+        # if dpid:
+        #     #TODO: get flows
+        pass
+
+    # called by watcher when topology update
+    def update_handler(self, address, delta):
+        if self.address != address:
+            # user be watching the another controller already
+            return
+
+        send = {}
+        send['switches'] = self._update_switches(
+            delta.added['switches'], delta.deleted['switches'])
+        send['ports'] = self._update_ports(
+            delta.added['ports'], delta.deleted['ports'])
+        send['links'] = self._update_links(
+            delta.added['links'], delta.deleted['links'])
+
+        self._send_delta(address, send)
+
+    def _update_switches(self, added, deleted):
+        send = {}
+        send['added'] = []
+        for a in added:
+            if not self._is_topo([a.dpid]):
+                self.topo[a.dpid] = a.to_dict()
+                ports = {}
+                for p in a.ports:
+                    ports[p.port_no] = p.to_dict()
+                    ports[p.port_no]['peer'] = {}
+                self.topo[a.dpid]['ports'] = ports
+                # TODO: has not name...
+                self.topo[a.dpid]['name'] = 's' + str(a.dpid)
+                send['added'].append(a)
+
+        send['deleted'] = []
+        for d in deleted:
+            del self.topo[d.dpid]
+            send['deleted'].append(d)
+        return send
+
+    def _update_ports(self, added, deleted):
+        send = {}
+        send['added'] = []
+        for a in added:
+            if not self._is_topo([a.dpid, 'ports', a.port_no]):
+                self.topo[a.dpid]['ports'][a.port_no] = a.to_dict()
+                self.topo[a.dpid]['ports']['peer'] = {}
+                send['added'].append(a)
+
+        send['deleted'] = []
+        for d in deleted:
+            if self._is_topo([d.dpid, 'ports', d.port_no]):
+                del self.topo[d.dpid]['ports'][d.port_no]
+                send['deleted'].append(d)
+        return send
+
+    def _update_links(self, added, deleted):
+        send = {}
+        send['added'] = []
+        for a in added:
+            if not self._is_topo([a.src.dpid, 'ports', a.src.port_no, 'peer']):
+                self.topo[a.src.dpid]['ports'] \
+                    [a.src.port_no]['peer'] = a.dst.to_dict()
+                if self._is_topo([a.dst.dpid, 'ports', a.dst.port_no, 'peer']):
+                    send['added'].append(a)
+
+        send['deleted'] = []
+        for d in deleted:
+            need = 0
+            if self._is_topo([d.src.dpid, 'ports', d.src.port_no, 'peer']):
+                self.topo[d.src.dpid]['ports'][d.src.port_no]['peer'] = {}
+                need += 1
+            if self._is_topo([d.dst.dpid, 'ports', d.dst.port_no, 'peer']):
+                self.topo[d.dst.dpid]['ports'][d.dst.port_no]['peer'] = {}
+                need += 1
+            if need == 2:
+                send['deleted'].append(d)
+        return send
+
+    def _is_topo(self, keyes):
+        val = self.topo
+        for key in keyes:
+            val = val.get(key, {})
+        return val
+
+    def _send_delta(self, address, send):
+        self._send_message('rest_connected', address)
+        body = []
+        for s in send['switches']['added']:
+            body.append(self._is_topo([s.dpid]))
+        if body:
+            self._send_message('add_switches', address, body)
+
+        body = [{'dpid': s.dpid} for s in send['switches']['deleted']]
+        if body:
+            self._send_message('del_switches', address, body)
+
+        body = []
+        for p in send['ports']['added']:
+            body.append(self._is_topo([p.dpid, 'ports', p.port_no]))
+        if body:
+            self._send_message('add_ports', address, body)
+
+        body = []
+        for p in send['ports']['deleted']:
+            body.append({'dpid': p.dpid, 'port_no': p.port_no})
+        if body:
+            self._send_message('del_ports', address, body)
+
+        body = []
+        for l in send['links']['added']:
+            p1 = self._is_topo([l.src.dpid, 'ports', l.src.port_no])
+            p2 = self._is_topo([l.dst.dpid, 'ports', l.dst.port_no])
+            body.append({'p1': p1, 'p2': p2})
+        if body:
+            self._send_message('add_links', address, body)
+
+        body = []
+        for l in send['links']['deleted']:
+            p1 = l.src.to_dict()
+            p2 = l.dst.to_dict()
+            body.append({'p1': p1, 'p2': p2})
+        if body:
+            self._send_message('del_links', address, body)
 
 
-class TopologyDiscovery(object):
-    def __init__(self, ws):
-        self.ws = ws
-        self.threads = []
-        self.is_active = False
-        self.model = None
-        self.looking_switch = None
-    
-    def connect(self, host, port):
-        # TODO get model
-        self.model = {}
-        LOG.debug("REST connected. %s:%s", host, port)
-        return True
-
-    def send_event(self, ev):
-        LOG.debug("Websocket: send msg. %s", ev)
-        self.ws.send(json.dumps(ev))
-
-    def start(self):
-        self.is_active = True
-        self.threads.append(
-            gevent.spawn_later(0, self._topology_discovery))
-
-    def _topology_discovery(self):
-        cnt = 1
-        while self.is_active:
-            if self.is_active:
-                # add switch test
-                if 1 <= cnt <= 5:
-                    ev = EventAddSwitch()
-                    name = 's' + str(cnt)
-                    ports = {}
-                    for i in range(1, 5):
-                        port = {}
-                        port['dpid'] = cnt
-                        port['port_no'] = i
-                        port['name'] = 's' + str(cnt) + '-eth' + str(i)
-                        port['peer'] = {'dpid': 0, 'port_no': 0}
-                        ports[i] = port
-                    ev.set_body(dpid=cnt, name=name, ports=ports)
-                    self.send_event(ev)
-#                # del switch
-#                elif cnt <= 6:
-#                    ev = EventDelSwitch()
-#                    ev.set_body(dpid=5)
-#                    self.send_event(ev)
-                # add port
-                elif cnt == 6:
-                    ev = EventAddPort()
-                    ev.set_body(dpid=1, port_no=6, name="s1-eth6", peer={'dpid': 0, 'port_no': 0})
-                    self.send_event(ev)
-                # del port
-                elif cnt == 7:
-                    ev = EventDelPort()
-                    ev.set_body(dpid=1, port_no=6)
-                    self.send_event(ev)
-                # add link
-                elif cnt == 8:
-                    ev = EventAddLink()
-                    p1 = {}
-                    p1['dpid'] = cnt - 7
-                    p1['port_no'] = 1
-                    p2 = {}
-                    p2['dpid'] = cnt - 5
-                    p2['port_no'] = 2
-                    ev.set_body(p1=p1, p2=p2)
-                    self.send_event(ev)
-                elif cnt == 9:
-                    ev = EventAddLink()
-                    p1 = {}
-                    p1['dpid'] = cnt - 7
-                    p1['port_no'] = 1
-                    p2 = {}
-                    p2['dpid'] = cnt - 5
-                    p2['port_no'] = 2
-                    ev.set_body(p1=p1, p2=p2)
-                    self.send_event(ev)
-                # del link
-                elif cnt == 10:
-                    ev = EventDelLink()
-                    p1 = {}
-                    p1['dpid'] = cnt - 9
-                    p1['port_no'] = 1
-                    p2 = {}
-                    p2['dpid'] = cnt - 7
-                    p2['port_no'] = 2
-                    ev.set_body(p1=p1, p2=p2)
-                    self.send_event(ev)
-                elif cnt == 11:
-                    ev = EventDelLink()
-                    p1 = {}
-                    p1['dpid'] = cnt - 9
-                    p1['port_no'] = 1
-                    p2 = {}
-                    p2['dpid'] = cnt - 7
-                    p2['port_no'] = 2
-                    ev.set_body(p1=p1, p2=p2)
-                    self.send_event(ev)
-                cnt += 1
-            #if cnt > 7:
-            if cnt > 0:
-                gevent.sleep(5)
+    # called by watcher when rest api error
+    def rest_error_handler(self, address, e):
+        LOG.debug('REST API Error: %s' % e)
+        [host, port] = address.split(':')
+        self._send_message('rest_disconnected', address)
