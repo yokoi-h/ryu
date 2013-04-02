@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import logging
-from flask import abort, make_response
+from flask import abort, make_response, jsonify
 
 
 LOG = logging.getLogger('ryu_gui')
@@ -27,6 +27,9 @@ class ViewBase(object):
     def run(self):
         LOG.error('run() is not defined.')
         abort(500)
+
+    def json_response(self, data):
+        return jsonify(**data)
 
     def null_response(self):
         res = make_response()

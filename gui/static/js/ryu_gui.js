@@ -1,7 +1,8 @@
 var conf = {
   URL_GET_FLOWS: 'stats/flow',
   LABEL_FONT_SIZE: 10,
-  EVENT_LOOP_WAIT: 500,
+  EVENT_LOOP_INTERVAL: 500,
+  REPLACE_FLOW_INTERVAL: 5000,
   IMG_SW: {"x": 50, "y": 30, "img": "static/img/switch.png"},
   DEFAULT_REST_PORT: '8080',
   ID_PRE_SW: 'node-switch-',
@@ -166,9 +167,11 @@ var topo = {
 
     if (_DATA.timer.watingSwitchHighlight) clearInterval(_DATA.timer.watingSwitchHighlight)
     if (dpid) {
-      _DATA.timer.watingSwitchHighlight = setInterval(function(){
+      var intervalfnc = function() {
         $("#" + conf.ID_PRE_SW + dpid).fadeTo(500, 0.50).fadeTo(1000, 1)
-      }, 1500)
+      };
+      intervalfnc();
+      _DATA.timer.watingSwitchHighlight = setInterval(intervalfnc, 1500);
     }
 
     _DATA.watching = dpid;
@@ -182,13 +185,16 @@ var topo = {
 
       // flow list
       if (_DATA.timer.replaceFlowList) clearInterval(_DATA.timer.replaceFlowList)
-      _DATA.timer.replaceFlowList = setInterval(function(){
-        rest.getFlows(_DATA.host, _DATA.port, _DATA.watching, function(data) {
+      var intervalfnc = function() {
+        rest.getFlows(_DATA.input.host, _DATA.input.port, _DATA.watching, function(data) {
+          if (data.host != _DATA.input.host || data.port != _DATA.input.port) return;
           utils.replaceFlowList(data.dpid, data.flows);
-        }
-      }, 3000);
+        }, function(data){utils.replaceFlowList(false)});
+      };
+      intervalfnc();
+      _DATA.timer.replaceFlowList = setInterval(intervalfnc, conf.REPLACE_FLOW_INTERVAL);
     }
-    websocket.sendWatchingSwitch(dpid);
+//    websocket.sendWatchingSwitch(dpid);
   },
 
   redesignTopology: function(){
@@ -225,7 +231,7 @@ var utils = {
       if (ev.length == 1) ev[0]()
       else ev[0](ev[1]);
     }
-    setTimeout(utils.event_loop, conf.EVENT_LOOP_WAIT);
+    setTimeout(utils.event_loop, conf.EVENT_LOOP_INTERVAL);
   },
 
   registerEvent: function(func, arg){
@@ -477,11 +483,14 @@ var utils = {
   },
 
   replaceFlowList: function(dpid, flows){
+    if (dpid === false) {
+      utils.clearFlowList();
+      return
+    }
     if (dpid != _DATA.watching) return;
+    utils.clearFlowList()
 
     var list_table = document.getElementById("flow-list-table");
-    $(list_table).remove('.content-table-item');
-
     for (var i in flows) {
       var tr = list_table.insertRow(-1);
       tr.className = 'content-table-item';
@@ -506,12 +515,15 @@ var utils = {
 //  rest
 ///////////////////////////////////
 var rest = {
-  getFlows: function(host, port, dpid, successfnc) {
+  getFlows: function(host, port, dpid, successfnc, errorfnc) {
+    if (typeof errorfnc === "undefined") errorfnc = function(){return false}
     $.ajax({
       'type': 'POST',
       'url': conf.URL_GET_FLOWS,
       'data': {"host": host, "port": port, "dpid": dpid},
-      'success': successfnc
+      'dataType': 'json',
+      'success': successfnc,
+      'error': errorfnc
     });
   }
 };
