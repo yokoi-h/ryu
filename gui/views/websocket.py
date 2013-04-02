@@ -3,7 +3,7 @@ import gevent
 import json
 
 import view_base
-from models import TopologyWatcher
+from models.topology import TopologyWatcher
 
 LOG = logging.getLogger('ryu.gui')
 
