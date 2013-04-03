@@ -497,7 +497,47 @@ var utils = {
       tr.id = conf.ID_PRE_FLOW_LIST + dpid + '-' + i;
       var td = tr.insertCell(-1);
       td.className = 'flow';
-      td.innerHTML = flows[i];
+
+      // stats
+      var stats = document.createElement('div');
+      stats.className = 'flow-item-line';
+      td.appendChild(stats);
+      var statsTitle = document.createElement('span');
+      statsTitle.className = 'flow-item-title';
+      statsTitle.innerHTML = 'stats:';
+      stats.appendChild(statsTitle);
+      var statsVal = document.createElement('span');
+      statsVal.className = 'flow-item-value';
+      statsVal.innerHTML = flows[i].stats;
+      stats.appendChild(statsVal);
+
+      // rules
+      var rules = document.createElement('div');
+      rules.className = 'flow-item-line';
+      td.appendChild(rules);
+      var rulesTitle = document.createElement('span');
+      rulesTitle.className = 'flow-item-title';
+      rulesTitle.innerHTML = 'rules:';
+      rules.appendChild(rulesTitle);
+      var rulesVal = document.createElement('span');
+      rulesVal.className = 'flow-item-value';
+      rulesVal.innerHTML = flows[i].rules;
+      rules.appendChild(rulesVal);
+
+      // actions
+      var actions = document.createElement('div');
+      actions.className = 'flow-item-line';
+      td.appendChild(actions);
+      var actionsTitle = document.createElement('span');
+      actionsTitle.className = 'flow-item-title';
+      actionsTitle.innerHTML = 'actions:';
+      actions.appendChild(actionsTitle);
+      var actionsVal = document.createElement('span');
+      actionsVal.className = 'flow-item-value';
+      actionsVal.innerHTML = flows[i].actions;
+      actions.appendChild(actionsVal);
+
+//      td.innerHTML = flows[i];
       utils._repainteRows('flow-list-table');
     }
   },
