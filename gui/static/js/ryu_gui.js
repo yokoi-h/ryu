@@ -321,20 +321,19 @@ var utils = {
     var node_div = document.getElementById(id)
     node_div.setAttribute("onClick","topo.watchingSwitch('" + sw.dpid + "')");
 
-    $(node_div).find("img").attr('title', "dpid: " + sw.dpid);
-/**
+//    var labelStr = 'dpid:' + ("0000000000000000" + sw.dpid.toString(16)).slice(-16);
+    var labelStr = 'dpid: 0x' + sw.dpid.toString(16);
+    $(node_div).find("img").attr('title', labelStr);
     var fontSize = conf.LABEL_FONT_SIZE;
     var label_div = document.createElement('div');
     label_div.className = "switch-label";
     label_div.id = id + "-label";
-    label_div.style.width = sw.name.length * fontSize;
-    label_div.style.marginTop = 0 - (img.y + fontSize) / 2;
-    label_div.style.marginLeft = (img.x - sw.name.length * fontSize) / 2;
-    
-    var label_text = document.createTextNode(sw.name);
+    label_div.style.width = labelStr.length * fontSize;
+//    label_div.style.marginTop = 0 - (img.y + fontSize) / 2;
+    label_div.style.marginLeft = (img.x - labelStr.length * fontSize) / 2;
+    var label_text = document.createTextNode(labelStr);
     label_div.appendChild(label_text);
     node_div.appendChild(label_div);
-**/
   },
 
   delSwitch: function(dpid) {

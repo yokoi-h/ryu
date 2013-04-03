@@ -267,13 +267,13 @@ body a {
 }
 #topology .switch-label {
   position: relative;
-  font-weight:bold;
-  background-color: red;
-  color: white;
+/*  font-weight:bold; */
+/*  background-color: red; */
+/*  color: white; */
   text-align: center;
   border: 0px solid #FFF;
-  height: 15px;
-  z-index: 3
+/*  height: 15px; */
+  z-index: 3;
 }
 #topology .port-no {
   -webkit-border-radius: 10px;
