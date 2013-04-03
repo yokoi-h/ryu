@@ -258,20 +258,22 @@ body a {
   font-weight: normal;
 }
 #topology .switch {
-  z-index: 1
+  z-index: 1;
+  border: 0px solid #FFF;
+  
 }
 #topology .switch img {
-  z-index: 2
+  z-index: 2;
 }
 #topology .switch-label {
   position: relative;
-  font-weight:bold;
-  background-color: red;
-  color: white;
+/*  font-weight:bold; */
+/*  background-color: red; */
+/*  color: white; */
   text-align: center;
   border: 0px solid #FFF;
-  height: 15px;
-  z-index: 3
+/*  height: 15px; */
+  z-index: 3;
 }
 #topology .port-no {
   -webkit-border-radius: 10px;
