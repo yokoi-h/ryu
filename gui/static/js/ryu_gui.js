@@ -164,34 +164,25 @@ var topo = {
     if (typeof dpid === "undefined")  dpid = "";
     else if (! dpid in _DATA.switches) return;
     else if (dpid == _DATA.watching) return;
-/**
-    if (_DATA.timer.watingSwitchHighlight) clearInterval(_DATA.timer.watingSwitchHighlight)
-    if (dpid) {
-      var intervalfnc = function() {
-        $("#" + conf.ID_PRE_SW + dpid).fadeTo(500, 0.50).fadeTo(1000, 1)
-      };
-      intervalfnc();
-      _DATA.timer.watingSwitchHighlight = setInterval(intervalfnc, 1500);
-    }
-**/
+
     $("#topology div").find(".switch").css("border", "0px solid #FFF");
     $("#" + conf.ID_PRE_SW + dpid).css("border", "3px solid red");
     _DATA.watching = dpid;
-    utils.clearLinkList();
+    utils.refreshLinkList();
     utils.clearFlowList();
 
     if (dpid) {
-      // link list
-      var sw = _DATA.switches[dpid];
-      for (var i in sw.ports) utils.appendLinkList(sw.ports[i]);
-
       // flow list
       if (_DATA.timer.replaceFlowList) clearInterval(_DATA.timer.replaceFlowList)
       var intervalfnc = function() {
-        rest.getFlows(_DATA.input.host, _DATA.input.port, _DATA.watching, function(data) {
-          if (data.host != _DATA.input.host || data.port != _DATA.input.port) return;
-          utils.replaceFlowList(data.dpid, data.flows);
-        }, function(data){utils.replaceFlowList(false)});
+        if (_DATA.watching == dpid) {
+          rest.getFlows(_DATA.input.host, _DATA.input.port, _DATA.watching, function(data) {
+            if (data.host != _DATA.input.host || data.port != _DATA.input.port) return;
+            utils.replaceFlowList(data.dpid, data.flows);
+          }, function(data){utils.replaceFlowList(false)});
+        } else {
+          clearInterval(_DATA.timer.replaceFlowList);
+        }
       };
       intervalfnc();
       _DATA.timer.replaceFlowList = setInterval(intervalfnc, conf.REPLACE_FLOW_INTERVAL);
@@ -214,6 +205,7 @@ var topo = {
       utils.addSwitch(sw, position)
       cnt ++;
     }
+    utils.repaintConnections();
   },
 
   emMatchFlow: function(source, target) {
@@ -227,6 +219,16 @@ var topo = {
 //  utils
 ///////////////////////////////////
 var utils = {
+  topologyCleanup: function() {
+    topo.watchingSwitch();
+    jsPlumb.reset();
+    $("#topology .switch").remove();
+    _DATA.switches = {};
+  },
+
+  /////
+  // Event
+  /////
   event_loop: function() {
     if (_EVENTS.length) {
       var ev = _EVENTS.shift();
@@ -241,6 +243,9 @@ var utils = {
     else _EVENTS.push([func, arg])
   },
 
+  /////
+  // Rest
+  /////
   restDisconnected: function(host, port) {
     $("#topology").find(".rest-status").css('color', 'red').text('Disconnected');
     if (typeof host !== "undefined" && typeof port !== "undefined") {
@@ -263,6 +268,9 @@ var utils = {
     }
   },
 
+  /////
+  // Node
+  /////
   _addNode: function(id, position, img, className) {
     var topo_div = $("#topology .content-body")[0];
     var node_div = document.createElement('div');
@@ -288,17 +296,8 @@ var utils = {
   },
 
   _moveNode: function(id, position) {
-    // jsPlumb detach connections
-    var conn = jsPlumb.getConnections({souece: id});
-    jsPlumb.removeAllEndpoints(id);
-
-    // move position and reconnect
-    $("#" + id).animate({left: position.y, top: position.x}, 300, 'swing', function(){
-        for (var i in conn) {
-          utils._addConnect(conn[i].source, conn[i].target, conn[i].getOverlays()[0].getLabel());
-        }
-      }
-    );
+    // move position
+    $("#" + id).animate({left: position.y, top: position.x}, 300, 'swing');
   },
 
   _delNode: function(id) {
@@ -309,6 +308,17 @@ var utils = {
     $("#" + id).remove();
   },
 
+  _calTh: function(no, len, base, radii) {
+    var th = 3.14159;
+    var p = {};
+    p['x'] = base.x + radii.x * Math.cos(th * 2 * (len - no) / len);
+    p['y'] = base.y + radii.y * Math.sin(th * 2 * (len - no) / len);
+    return p
+  },
+
+  /////
+  // Node (switch)
+  /////
   addSwitch: function(sw, position) {
     var id = conf.ID_PRE_SW + sw.dpid;
     if (document.getElementById(id)) {
@@ -340,14 +350,9 @@ var utils = {
     utils._delNode(conf.ID_PRE_SW + dpid);
   },
 
-  _calTh: function(no, len, base, radii) {
-    var th = 3.14159;
-    var p = {};
-    p['x'] = base.x + radii.x * Math.cos(th * 2 * (len - no) / len);
-    p['y'] = base.y + radii.y * Math.sin(th * 2 * (len - no) / len);
-    return p
-  },
-
+  /////
+  // List
+  /////
   _repainteRows: function(list_table_id) {
     var rows = $("#main").find(".content");
     for (var i=0; i < $("#" + list_table_id).find(".content-table-item").length; i++) {
@@ -362,6 +367,9 @@ var utils = {
     }
   },
 
+  /////
+  // List (links)
+  /////
   appendLinkList: function(link){
     var list_table = document.getElementById('link-list-table');
     var tr = list_table.insertRow(-1);
@@ -397,90 +405,23 @@ var utils = {
     utils._repainteRows('link-list-table');
   },
 
-  modifyLinkList: function(p1, p2) {
-    var watching;
-    var other;
-    if (p1.dpid == _DATA.watching) {
-      watching = _DATA.switches[p1.dpid].ports[p1.port_no];
-      other = p2;
-    } else if (p2.dpid == _DATA.watching) {
-      watching = _DATA.switches[p2.dpid].ports[p2.port_no];
-      other = p1;
-    } else {
-      return
+  refreshLinkList: function() {
+    utils.clearLinkList();
+    if (_DATA.watching) {
+      var sw = _DATA.switches[_DATA.watching];
+      for (var i in sw.ports) utils.appendLinkList(sw.ports[i]);
     }
-
-    id = conf.ID_PRE_LINK_LIST + watching.dpid + '-' + watching.port_no;
-
-    if (Number(watching.peer.dpid) == Number(other.dpid)) {
-      var peer_switch = _DATA.switches[other.dpid].name;
-      var peer_port = _DATA.switches[other.dpid].ports[other.port_no].name;
-      $("#" + id).find(".peer-port-name").text(peer_port);
-      $("#" + id).find(".peer-switch-name").text('(' + peer_switch + ')');
-    } else {
-      $("#" + id).find(".peer-port-name").text('');
-      $("#" + id).find(".peer-switch-name").text('');
-    }
-  },
-
-  deleteLinkList: function(link) {
-    if (link.dpid != _DATA.watching) return;
-    var id = conf.ID_PRE_LINK_LIST + link.dpid + '-' + link.port_no;
-    $('#' + id).remove();
-    utils._repainteRows('link-list-table');
   },
 
   clearLinkList: function(){
     $('#link-list tr').remove('.content-table-item');
   },
 
+  /////
+  // List (flows)
+  /////
   clearFlowList: function(){
     $('#flow-list tr').remove('.content-table-item');
-  },
-
-  addConnect: function(p1, p2) {
-    var id_p1 = conf.ID_PRE_SW + p1.dpid;
-    var id_p2 = conf.ID_PRE_SW + p2.dpid;
-    utils._addConnect(id_p1, id_p2, p1.port_no);
-    utils._addConnect(id_p2, id_p1, p2.port_no);
-  },
-
-  _addConnect: function(s, t, port_no) {
-    var overlays = null;
-    if (Number(port_no) > 0) overlays = [["Label", {label: port_no + "",
-                                                    location: 0.15,
-                                                    cssClass: "port-no"}]];
-
-//    var connector = 'StateMachine';
-    var connector = 'Straight';
-    var endpoint = 'Blank';
-    var anchors = ["Center", "Center"];
-    var click = function(conn) { topo.emMatchFlow([conn.sourceId, conn.targetId]) }
-    var paintStyle = {"lineWidth": 3,
-                      "strokeStyle": '#35FF35',
-                      "outlineWidth": 0.5,
-                      "outlineColor": '#AAA',
-                      "dashstyle": "0 0 0 0"}
-
-    var conn = jsPlumb.connect({source: s,
-                                target: t,
-                                endpoint: endpoint,
-                                paintStyle: paintStyle,
-                                connector: connector,
-                                anchors: anchors,
-                                overlays: overlays});
-    conn.bind('click', click);
-  },
-
-  delConnect: function(p1, p2) {
-    var id_p1 = conf.ID_PRE_SW + p1.dpid;
-    var id_p2 = conf.ID_PRE_SW + p2.dpid;
-    utils._delConnect(id_p1, id_p2);
-    utils._delConnect(id_p2, id_p1);
-  },
-
-  _delConnect: function(s, t) {
-    jsPlumb.detach({source: s, target: t});
   },
 
   replaceFlowList: function(dpid, flows){
@@ -538,16 +479,60 @@ var utils = {
       actionsVal.innerHTML = flows[i].actions;
       actions.appendChild(actionsVal);
 
-//      td.innerHTML = flows[i];
       utils._repainteRows('flow-list-table');
     }
   },
 
-  topologyCleanup: function() {
-    topo.watchingSwitch();
-    jsPlumb.reset();
-    $("#topology .switch").remove();
-    _DATA.switches = {};
+  /////
+  // Connections
+  /////
+  addConnect: function(p1, p2) {
+    var id_p1 = conf.ID_PRE_SW + p1.dpid;
+    var id_p2 = conf.ID_PRE_SW + p2.dpid;
+    utils._addConnect(id_p1, id_p2, p1.port_no);
+    utils._addConnect(id_p2, id_p1, p2.port_no);
+  },
+
+  _addConnect: function(s, t, port_no) {
+    var overlays = null;
+    if (Number(port_no) > 0) overlays = [["Label", {label: port_no + "",
+                                                    location: 0.15,
+                                                    cssClass: "port-no"}]];
+
+//    var connector = 'StateMachine';
+    var connector = 'Straight';
+    var endpoint = 'Blank';
+    var anchors = ["Center", "Center"];
+    var click = function(conn) { topo.emMatchFlow([conn.sourceId, conn.targetId]) }
+    var paintStyle = {"lineWidth": 3,
+                      "strokeStyle": '#35FF35',
+                      "outlineWidth": 0.5,
+                      "outlineColor": '#AAA',
+                      "dashstyle": "0 0 0 0"}
+
+    var conn = jsPlumb.connect({source: s,
+                                target: t,
+                                endpoint: endpoint,
+                                paintStyle: paintStyle,
+                                connector: connector,
+                                anchors: anchors,
+                                overlays: overlays});
+    conn.bind('click', click);
+  },
+
+  delConnect: function(p1, p2) {
+    var id_p1 = conf.ID_PRE_SW + p1.dpid;
+    var id_p2 = conf.ID_PRE_SW + p2.dpid;
+    utils._delConnect(id_p1, id_p2);
+    utils._delConnect(id_p2, id_p1);
+  },
+
+  _delConnect: function(s, t) {
+    jsPlumb.detach({source: s, target: t});
+  },
+
+  repaintConnections: function(){
+    try {jsPlumb.repaintEverything();} catch(e) {}
   }
 };
 
@@ -593,11 +578,13 @@ var websocket = {
       for (var i in msg.body) {
         utils.registerEvent(websocket._addSwitch, msg.body[i]);
       };
+      utils.registerEvent(utils.repaintConnections);
 
     } else if (msg.message == 'del_switches') {
       for (var i in msg.body) {
         utils.registerEvent(websocket._delSwitch, msg.body[i]);
       };
+      utils.registerEvent(utils.repaintConnections);
 
     } else if (msg.message == 'add_ports') {
       utils.registerEvent(function(ports){
@@ -627,9 +614,9 @@ var websocket = {
     }
   },
 
-  ////////////
+  ////
   // send messages
-  ////////////
+  ////
   sendRestUpdate: function(host, port){
     var msg = {};
     msg.message = 'rest_update';
@@ -647,9 +634,9 @@ var websocket = {
     websocket._sendMessage(msg);
   },
 
-  ////////////
+  ////
   // recive messages
-  ////////////
+  ////
   _addSwitch: function(body) {
     if (_DATA.switches[body.dpid]) return;
     _DATA.switches[body.dpid] = body;
@@ -666,23 +653,20 @@ var websocket = {
         var port = _DATA.switches[s].ports[p];
         if (port.peer.dpid == body.dpid) {
           _DATA.switches[s].ports[p].peer = {};
-          utils.modifyLinkList(body, port);
         }
       }
     }
+    utils.refreshLinkList();
     delete _DATA.switches[body.dpid]
     topo.redesignTopology();
   },
 
   _addPort: function(body) {
     if (_DATA.switches[body.dpid]) _DATA.switches[body.dpid].ports[body.port_no] = body;
-    utils.appendLinkList(body);
+    utils.refreshLinkList();
   },
 
   _delPort: function(body) {
-    // delete link list
-    utils.deleteLinkList(body);
-
     // delete connect and memory
     for (var s in _DATA.switches) {
       for (var p in _DATA.switches[s].ports) {
@@ -695,20 +679,21 @@ var websocket = {
       }
     }
     delete _DATA.switches[body.dpid].ports[body.port_no];
+    utils.refreshLinkList();
   },
 
   _addLink: function(body) {
     _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = body.p2;
     _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = body.p1;
     utils.addConnect(body.p1, body.p2);
-    utils.modifyLinkList(body.p1, body.p2);
+    utils.refreshLinkList();
   },
 
   _delLink: function(body) {
     _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = {};
     _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = {};
     utils.delConnect(body.p1, body.p2);
-    utils.modifyLinkList(body.p1, body.p2);
+    utils.refreshLinkList();
   },
 
   _replaceFlows: function(body) {
