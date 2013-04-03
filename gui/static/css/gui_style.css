@@ -207,10 +207,29 @@ body a {
 #flow-list td {
   padding-left: 5px;
   line-height: 1.4;
-  white-space: normal;
+/*  white-space: normal; */
 /*  letter-spacing: 0.15em; */
 }
-
+#flow-list .flow-item-line{
+  width: 100%;
+  border-bottom: dashed 1px #808080;
+}
+#flow-list .flow-item-line .flow-item-title{
+/**
+  float: left;
+  width: 5em;
+**/
+  color: #000;
+  font-weight: bold;
+  padding-left: 0.5em;
+}
+#flow-list .flow-item-line .flow-item-value{
+/**
+  float: right;
+  width: auto;
+**/
+  padding-left: 0.5em;
+}
 /**
  * Topology
  **/
