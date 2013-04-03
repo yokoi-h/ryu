@@ -18,7 +18,7 @@ import logging
 import inspect
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
-from flask import Flask, g, request, abort
+from flask import Flask, request, abort
 from views.view_base import ViewBase
 
 
@@ -49,14 +49,10 @@ def index():
     return _view('topology')
 
 
-@app.route('/stats/<int:dpid>')
-def stats(dpid):
-    return _view('stats', dpid)
-
-
-#@app.route('/flow/<int:dpid>', methods=['POST'])
-#def flow_mod(dpid):
-#    return _view('flow_mod', dpid, request.form.get("flow"))
+@app.route('/stats/flow', methods=['POST'])
+def flow_mod():
+    return _view('flow', request.form.get('host'), request.form.get('port'),
+                 request.form.get('dpid'), request.form.get('flows'))
 
 
 @app.route('/websocket')
