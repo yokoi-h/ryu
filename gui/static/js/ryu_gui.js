@@ -164,7 +164,7 @@ var topo = {
     if (typeof dpid === "undefined")  dpid = "";
     else if (! dpid in _DATA.switches) return;
     else if (dpid == _DATA.watching) return;
-
+/**
     if (_DATA.timer.watingSwitchHighlight) clearInterval(_DATA.timer.watingSwitchHighlight)
     if (dpid) {
       var intervalfnc = function() {
@@ -173,7 +173,9 @@ var topo = {
       intervalfnc();
       _DATA.timer.watingSwitchHighlight = setInterval(intervalfnc, 1500);
     }
-
+**/
+    $("#topology div").find(".switch").css("border", "0px solid #FFF");
+    $("#" + conf.ID_PRE_SW + dpid).css("border", "3px solid red");
     _DATA.watching = dpid;
     utils.clearLinkList();
     utils.clearFlowList();
