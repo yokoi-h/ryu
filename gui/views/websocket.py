@@ -60,10 +60,13 @@ class WebsocketView(view_base.ViewBase):
     def _watcher_start(self, body):
         address = '%s:%s' % (body['host'], body['port'])
         self.address = address
-        if self.watcher.address != address:
-            self.topo = {}
+        if self.watcher:
             self.watcher.stop()
-            self.watcher.start(address)
+
+        self.watcher = TopologyWatcher(update_handler=self.update_handler,
+                        rest_error_handler=self.rest_error_handler)
+        self.topo = {}
+        self.watcher.start(address)
 
     def _watching_switch_update(self, body):
         # if dpid:
