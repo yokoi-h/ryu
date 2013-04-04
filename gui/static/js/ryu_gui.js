@@ -60,6 +60,10 @@ var topo = {
     $("#flow-list").resizable( { autoHide : true } );
     $("#link-list").resizable( { autoHide : true } );
 
+    // Contents scrollbar
+    $("#link-list-body").perfectScrollbar();
+    $("#flow-list-body").perfectScrollbar();
+
     // Contents active
     $(".content").click(function(){topo.contentActive(this.id)});
 
@@ -83,6 +87,13 @@ var topo = {
     topo.setInput({'port': conf.DEFAULT_REST_PORT});
     utils.restDisconnected();
     utils.event_loop();
+
+    // scrollbar update
+    setInterval(function(){
+      $("#link-list-body").perfectScrollbar('update');
+      $("#flow-list-body").perfectScrollbar('update');
+    }, 100);
+
     $('#jquery-ui-dialog').dialog('open');
   },
 
