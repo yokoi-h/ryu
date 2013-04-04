@@ -3,6 +3,7 @@ var conf = {
   LABEL_FONT_SIZE: 10,
   EVENT_LOOP_INTERVAL: 500,
   REPLACE_FLOW_INTERVAL: 5000,
+  CONNECTION_REPAINT_INTERVAL: 500,
   IMG_SW: {"x": 50, "y": 30, "img": "static/img/switch.png"},
   DEFAULT_REST_PORT: '8080',
   ID_PRE_SW: 'node-switch-',
@@ -93,6 +94,11 @@ var topo = {
       $("#link-list-body").perfectScrollbar('update');
       $("#flow-list-body").perfectScrollbar('update');
     }, 100);
+
+    // connections repaint
+    setInterval(function(){
+      jsPlumb.repaint($("div .switch"))
+    }, conf.CONNECTION_REPAINT_INTERVAL);
 
     $('#jquery-ui-dialog').dialog('open');
   },
@@ -216,7 +222,6 @@ var topo = {
       utils.addSwitch(sw, position)
       cnt ++;
     }
-    utils.repaintConnections();
   },
 
   emMatchFlow: function(source, target) {
@@ -540,10 +545,6 @@ var utils = {
 
   _delConnect: function(s, t) {
     jsPlumb.detach({source: s, target: t});
-  },
-
-  repaintConnections: function(){
-    try {jsPlumb.repaintEverything();} catch(e) {}
   }
 };
 
@@ -589,13 +590,11 @@ var websocket = {
       for (var i in msg.body) {
         utils.registerEvent(websocket._addSwitch, msg.body[i]);
       };
-      utils.registerEvent(utils.repaintConnections);
 
     } else if (msg.message == 'del_switches') {
       for (var i in msg.body) {
         utils.registerEvent(websocket._delSwitch, msg.body[i]);
       };
-      utils.registerEvent(utils.repaintConnections);
 
     } else if (msg.message == 'add_ports') {
       utils.registerEvent(function(ports){
