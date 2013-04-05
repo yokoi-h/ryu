@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import time
 
 from mininet.net import Mininet
@@ -34,8 +35,14 @@ def delSwitch(mn, name):
     s = mn.get(name)
     s.stop()
 
+parser = ArgumentParser(
+    description='Topology auto creation and modification for test.')
+parser.add_argument('-c', '--controller', dest='controller', default='127.0.0.1')
+args = parser.parse_args()
+
 mn = Mininet()
-addController(mn, '192.168.31.201')
+ip = args.controller
+addController(mn, ip)
 
 print "Initializing..."
 addSwitch(mn, 's1')
