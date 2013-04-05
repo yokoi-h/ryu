@@ -79,16 +79,85 @@ class WebsocketView(view_base.ViewBase):
             # user be watching the another controller already
             return
 
-        send = {}
-        send['switches'] = self._update_switches(
-            delta.added['switches'], delta.deleted['switches'])
-        send['ports'] = self._update_ports(
-            delta.added['ports'], delta.deleted['ports'])
-        send['links'] = self._update_links(
-            delta.added['links'], delta.deleted['links'])
+        LOG.debug(delta)
+        self._send_message('rest_connected', address)
+        self._send_del_links(address, delta.deleted)
+        self._send_del_ports(address, delta.deleted)
+        self._send_del_switches(address, delta.deleted)
+        self._send_add_switches(address, delta.added)
+        self._send_add_ports(address, delta.added)
+        self._send_add_links(address, delta.added)
 
-        self._send_delta(address, send)
+    def _send_add_switches(self, address, topo):
+        body = self._build_switches_message(topo)
+        if body:
+            self._send_message('add_switches', address, body)
 
+    def _send_del_switches(self, address, topo):
+        body = self._build_switches_message(topo)
+        if body:
+            self._send_message('del_switches', address, body)
+
+    def _build_switches_message(self, topo):
+        body = []
+        for s in topo['switches']:
+            S = {'dpid': s.dpid, 'ports': {}}
+            for p in s.ports:
+                S['ports'][p.port_no] = p.to_dict()
+
+            body.append(S)
+
+        return body
+
+    def _send_add_ports(self, address, topo):
+        body = self._build_ports_message(topo)
+        if body:
+            self._send_message('add_ports', address, body)
+
+    def _send_del_ports(self, address, topo):
+        body = self._build_ports_message(topo)
+        if body:
+            self._send_message('del_ports', address, body)
+
+    def _build_ports_message(self, topo):
+        # send only except new added switches
+        ports = set(topo['ports'])
+        for s in topo['switches']:
+            ports -= set(s.ports)
+
+        body = []
+        for p in ports:
+            body.append(p.to_dict())
+
+        return body
+
+    def _send_add_links(self, address, topo):
+        body = self._build_links_message(topo)
+        if body:
+            self._send_message('add_links', address, body)
+
+    def _send_del_links(self, address, topo):
+        body = self._build_links_message(topo)
+        if body:
+            self._send_message('del_links', address, body)
+
+    def _build_links_message(self, topo):
+        body = []
+        for link in topo['links']:
+            # handle link as undirected
+            if link.src.dpid > link.dst.dpid:
+                continue
+
+            p1 = link.src.to_dict()
+            p2 = link.dst.to_dict()
+            L = {'p1': p1.copy(), 'p2': p2.copy()}
+            L['p1']['peer'] = p2.copy()
+            L['p2']['peer'] = p1.copy()
+            
+            body.append(L)
+
+        return body
+    
     def _update_switches(self, added, deleted):
         send = {}
         send['added'] = []
