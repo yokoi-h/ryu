@@ -1,3 +1,20 @@
+/**
+ * Copyright (C) 2013 Nippon Telegraph and Telephone Corporation.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ **/
 var conf = {
   URL_GET_FLOWS: 'stats/flow',
   LABEL_FONT_SIZE: 10,
@@ -12,13 +29,21 @@ var conf = {
 };
 
 
-var _EVENTS = [];
+var _EVENTS = []; // [fnc, arg]
+
 
 var _DATA = {
-  watching: null,
+  timer: {},      // ids of setTimeout() and setInterval()
+  watching: null, // dpid of select switch
   input: {},
-  switches: {},
-  timer: {}
+  switches: {}    // topology data
+                  // switches[<dpid>].dpid
+                  //                 .ports[<port_no>].dpid
+                  //                                  .port_no
+                  //                                  .name
+                  //                                  .peer.dpid
+                  //                                       .port_no
+                  //                                       .name
 };
 
 
@@ -27,6 +52,26 @@ var _DATA = {
 //  topo
 ///////////////////////////////////
 var topo = {
+  init: function(){
+    utils.restDisconnected();
+    utils.event_loop();
+
+    // scrollbar update
+    setInterval(function(){
+      $("#link-list-body").perfectScrollbar('update');
+      $("#flow-list-body").perfectScrollbar('update');
+    }, 100);
+
+    // connections repaint
+    setInterval(function(){
+      jsPlumb.repaint($("div .switch"))
+    }, conf.CONNECTION_REPAINT_INTERVAL);
+
+    // open dialog
+    topo.setInput({'port': conf.DEFAULT_REST_PORT});
+    $('#jquery-ui-dialog').dialog('open');
+  },
+
   registerHandler: function(){
     $('#jquery-ui-dialog').dialog({
       autoOpen: false,
@@ -76,30 +121,11 @@ var topo = {
     // Menu mouseouver/mouseout
     $('#menu a div').hover(function(){ topo.menuMouseOver(this); }, function(){ topo.menuMouseOut(this); });
 
-    // menu
+    // Menu action
     $('#jquery-ui-dialog-opener').click(function(){$('#jquery-ui-dialog').dialog('open');});
     $("#menu-flow-entries").click(function(){topo.contentActive('flow-list');});
     $("#menu-link-status").click(function(){topo.contentActive('link-list');});
     $("#menu-redesign").click(function(){topo.redesignTopology();});
-  },
-
-  init: function(){
-    topo.setInput({'port': conf.DEFAULT_REST_PORT});
-    utils.restDisconnected();
-    utils.event_loop();
-
-    // scrollbar update
-    setInterval(function(){
-      $("#link-list-body").perfectScrollbar('update');
-      $("#flow-list-body").perfectScrollbar('update');
-    }, 100);
-
-    // connections repaint
-    setInterval(function(){
-      jsPlumb.repaint($("div .switch"))
-    }, conf.CONNECTION_REPAINT_INTERVAL);
-
-    $('#jquery-ui-dialog').dialog('open');
   },
 
   setInput: function(input) {
@@ -188,7 +214,7 @@ var topo = {
     utils.clearFlowList();
 
     if (dpid) {
-      // flow list
+      // loop for flowList update
       if (_DATA.timer.replaceFlowList) clearInterval(_DATA.timer.replaceFlowList)
       var intervalfnc = function() {
         if (_DATA.watching == dpid) {
@@ -207,10 +233,10 @@ var topo = {
   },
 
   redesignTopology: function(){
-    var base = {x: $("#topology").height() / 2,
-                y: $("#topology").width() / 2}
-    var radii = {x: $("#topology").height() / 4,
-                 y: $("#topology").width() / 4}
+    var base = {x: $("#topology").width() / 2,
+                y: $("#topology").height() / 2}
+    var radii = {x: $("#topology").width() / 4,
+                 y: $("#topology").height() / 4}
     var cnt = 0;
     var len = 0;
     for (var i in _DATA.switches) len ++;
@@ -314,8 +340,8 @@ var utils = {
     if (typeof className !== 'undefined') node_div.className = className;
     node_div.style.width = img.x;
     node_div.style.height = img.y;
-    node_div.style.left = position.y;
-    node_div.style.top = position.x;
+    node_div.style.left = position.x;
+    node_div.style.top = position.y;
 
     node_img.id = id + "-img";
     node_img.src = img.img;
@@ -328,7 +354,7 @@ var utils = {
 
   _moveNode: function(id, position) {
     // move position
-    $("#" + id).animate({left: position.y, top: position.x}, 300, 'swing');
+    $("#" + id).animate({left: position.x, top: position.y}, 300, 'swing');
   },
 
   _delNode: function(id) {
@@ -342,8 +368,8 @@ var utils = {
   _calTh: function(no, len, base, radii) {
     var th = 3.14159;
     var p = {};
-    p['x'] = base.x + radii.x * Math.cos(th * 2 * (len - no) / len);
-    p['y'] = base.y + radii.y * Math.sin(th * 2 * (len - no) / len);
+    p['x'] = base.x + radii.x * Math.sin(th * 2 * (len - no) / len);
+    p['y'] = base.y + radii.y * Math.cos(th * 2 * (len - no) / len);
     return p
   },
 
@@ -407,14 +433,17 @@ var utils = {
     tr.className = 'content-table-item';
     tr.id = utils._linkListId(link.dpid, link.port_no);
 
+    // port-no
     var no_td = tr.insertCell(-1);
     no_td.className = 'port-no';
     no_td.innerHTML = link.port_no;
 
+    // name
     var name_td = tr.insertCell(-1);
     name_td.className = 'port-name';
     name_td.innerHTML = link.name;
 
+    // peer
     var peer_td = tr.insertCell(-1);
     var peer_port_span = document.createElement('span');
     peer_td.className = 'port-peer';
@@ -520,9 +549,12 @@ var utils = {
   addConnect: function(p1, p2) {
     var endpoint1 = utils._switchId(p1.dpid);
     var endpoint2 = utils._switchId(p2.dpid);
-    var uuids = [utils._connectionUUID(p1.dpid, p1.port_no), utils._connectionUUID(p2.dpid, p2.port_no)]
+    var uuids = [utils._connectionUUID(p1.dpid, p1.port_no),
+                 utils._connectionUUID(p2.dpid, p2.port_no)]
+
     var overlays = [["Label", {label: p1.port_no.toString(), location: 0.02, cssClass: "port-no"}],
                     ["Label", {label: p2.port_no.toString(), location: 0.98, cssClass: "port-no"}]];
+
     var connector = 'Straight';
     var endpoint = 'Blank';
     var anchors = ["Continuous", "Continuous"];
@@ -649,70 +681,68 @@ var websocket = {
   ////
   // recive messages
   ////
-  _addSwitch: function(body) {
-    if (_DATA.switches[body.dpid]) return;
-    _DATA.switches[body.dpid] = body;
+  _addSwitch: function(sw) {
+    if (_DATA.switches[sw.dpid]) return;
+    _DATA.switches[sw.dpid] = sw;
     topo.redesignTopology();
   },
 
-  _delSwitch: function(body) {
-    if (_DATA.watching == body.dpid) topo.watchingSwitch();
+  _delSwitch: function(sw) {
+    if (_DATA.watching == sw.dpid) topo.watchingSwitch();
 
-    utils.delSwitch(body.dpid)
-
-    for (var s in _DATA.switches) {
-      for (var p in _DATA.switches[s].ports) {
-        var port = _DATA.switches[s].ports[p];
-        if (port.peer.dpid == body.dpid) {
-          _DATA.switches[s].ports[p].peer = {};
-        }
-      }
+    // connections
+    for (var p in _DATA.switches[sw.dpid].ports) {
+      websocket._delPort(_DATA.switches[sw.dpid].ports[p]);
     }
-    utils.refreshLinkList();
-    delete _DATA.switches[body.dpid]
+
+    // node
+    utils.delSwitch(sw.dpid)
+    delete _DATA.switches[sw.dpid]
     topo.redesignTopology();
   },
 
-  _addPort: function(body) {
-    if (_DATA.switches[body.dpid]) _DATA.switches[body.dpid].ports[body.port_no] = body;
+  _addPort: function(port) {
+    if (_DATA.switches[port.dpid]) _DATA.switches[port.dpid].ports[port.port_no] = port;
     utils.refreshLinkList();
   },
 
-  _delPort: function(body) {
+  _delPort: function(port) {
     // delConnection
-    utils.delConnect(body.dpid, body.port_no);
+    utils.delConnect(port.dpid, port.port_no);
 
     // delete memory
-    for (var s in _DATA.switches) {
-      for (var p in _DATA.switches[s].ports) {
-        var port = _DATA.switches[s].ports[p];
-        if (port.peer.dpid == body.dpid && port.peer.port_no == body.port_no) {
-          _DATA.switches[s].ports[p].peer = {};
-          break;
+    for (var dpid in _DATA.switches) {
+      for (var port_no in _DATA.switches[dpid].ports) {
+        var target = _DATA.switches[dpid].ports[port_no];
+        if (target.peer) {
+          if (target.peer.dpid == port.dpid && target.peer.port_no == port.port_no) {
+            _DATA.switches[dpid].ports[port_no].peer = {};
+            break;
+          }
         }
       }
     }
-    delete _DATA.switches[body.dpid].ports[body.port_no];
+    delete _DATA.switches[port.dpid].ports[port.port_no];
 
     // refreshLinkList
     utils.refreshLinkList();
   },
 
-  _addLink: function(body) {
-    _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = body.p2;
-    _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = body.p1;
-    utils.addConnect(body.p1, body.p2);
+  _addLink: function(link) {
+    _DATA.switches[link.p1.dpid].ports[link.p1.port_no].peer = link.p2;
+    _DATA.switches[link.p2.dpid].ports[link.p2.port_no].peer = link.p1;
+    utils.addConnect(link.p1, link.p2);
     utils.refreshLinkList();
   },
 
-  _delLink: function(body) {
-    _DATA.switches[body.p1.dpid].ports[body.p1.port_no].peer = {};
-    _DATA.switches[body.p2.dpid].ports[body.p2.port_no].peer = {};
-    utils.delConnect(body.p1.dpid, body.p1.port_no);
+  _delLink: function(link) {
+    _DATA.switches[link.p1.dpid].ports[link.p1.port_no].peer = {};
+    _DATA.switches[link.p2.dpid].ports[link.p2.port_no].peer = {};
+    utils.delConnect(link.p1.dpid, link.p1.port_no);
     utils.refreshLinkList();
   },
 
-  _replaceFlows: function(body) {
-    utils.replaceFlowList(body.dpid, body.flows);
+  _replaceFlows: function(data) {
+    utils.replaceFlowList(data.dpid, data.flows);
   }
 };
