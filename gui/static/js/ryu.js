@@ -736,8 +736,16 @@ var websocket = {
   },
 
   _delLink: function(link) {
-    _DATA.switches[link.p1.dpid].ports[link.p1.port_no].peer = {};
-    _DATA.switches[link.p2.dpid].ports[link.p2.port_no].peer = {};
+    if (_DATA.switches[link.p1.dpid]) {
+      if (_DATA.switches[link.p1.dpid].ports[link.p1.port_no]) {
+        _DATA.switches[link.p1.dpid].ports[link.p1.port_no].peer = {};
+      }
+    }
+    if (_DATA.switches[link.p2.dpid]) {
+      if (_DATA.switches[link.p2.dpid].ports[link.p2.port_no]) {
+        _DATA.switches[link.p2.dpid].ports[link.p2.port_no].peer = {};
+      }
+    }
     utils.delConnect(link.p1.dpid, link.p1.port_no);
     utils.refreshLinkList();
   },
