@@ -1,87 +1,203 @@
-from argparse import ArgumentParser
+# Copyright (C) 2013 Nippon Telegraph and Telephone Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import time
+import json
+import httplib
 
-from mininet.net import Mininet
-from mininet.topo import Topo
-from mininet.node import RemoteController, OVSKernelSwitch
-from mininet.cli import CLI
+import ryu.contrib
+from oslo.config import cfg
+from mn_ctl import MNCtl
+from ryu.ofproto.ether import ETH_TYPE_ARP, ETH_TYPE_IP
+from ryu.ofproto.inet import IPPROTO_TCP
 
-def addController(mn, ip):
-    mn.addController(controller=RemoteController, ip=ip)
-    for controller in mn.controllers:
-        controller.start()
-    
-def addSwitch(mn, name):
-    mn.addSwitch(name, cls=OVSKernelSwitch)
-    s = mn.get(name)
-    s.start(mn.controllers)
 
-_links = {}
-def addLink(mn, src, dst):
-    [s, d] = mn.get(src, dst)
-    link = mn.addLink(s, d)
-    _links[(src, dst)] = link
-    s.attach(link.intf1)
-    d.attach(link.intf2)
+CONF = cfg.CONF
+CONF.register_cli_opts([
+    cfg.StrOpt('ofp-listen-host', default='127.0.0.1',
+               help='openflow tcp listen host.'),
+    cfg.IntOpt('ofp-listen-port', default=6633,
+               help='openflow tcp listen port.'),
+    cfg.IntOpt('rest-listen-port', default=8080,
+               help='rest api listen port')
+])
 
-def delLink(mn, src, dst):
-    [s, d] = mn.get(src, dst)
-    link = _links[(src, dst)]
-    s.detach(link.intf1)
-    d.detach(link.intf2)
-    link.delete()
-    
-def delSwitch(mn, name):
-    s = mn.get(name)
-    s.stop()
 
-parser = ArgumentParser(
-    description='Topology auto creation and modification for test.')
-parser.add_argument('-c', '--controller', dest='controller', default='127.0.0.1')
-args = parser.parse_args()
+_FLOW_PATH_BASE = '/stats/flowentry/%(cmd)s'
+MN = MNCtl()
 
-mn = Mininet()
-ip = args.controller
-addController(mn, ip)
+def main():
+    MN.add_controller(CONF.ofp_listen_host, CONF.ofp_listen_port)
 
-print "Initializing..."
-addSwitch(mn, 's1')
-addSwitch(mn, 's2')
-addSwitch(mn, 's3')
-addSwitch(mn, 's4')
-addLink(mn, 's1', 's2')
-addLink(mn, 's1', 's3')
-addLink(mn, 's1', 's4')
-addLink(mn, 's2', 's3')
-addLink(mn, 's2', 's4')
-addLink(mn, 's3', 's4')
+    ### Initializeing
+    print """
+Initializeing...
+  addSwitch s1, s2, s3, s4, s5
+  addLink   (s1, s2), (s2, s3)... (s5, s1)
+"""
+    # add switches
+    for i in range(5):
+        sw = 's%d' % (i + 1)
+        MN.add_switch(sw)
 
-print "done!"
-time.sleep(10)
+    # add links
+    for i in range(5):
+        sw1 = 's%d' % (i + 1)
+        sw2 = 's%d' % (i + 2)
+        if sw1 == 's5':
+            sw2 = 's1'
+        MN.add_link(sw1, sw2)
+    _wait(15)
 
-print "Added new switch and link"
-addSwitch(mn, 's5')
-addLink(mn, 's5', 's3')
-addLink(mn, 's5', 's4')
-time.sleep(5)
+    ### Added some switch
+    print """
+Added some switch
+  addSwitch s6, s7, s8, s9, s10
+"""
+    for i in range(5, 10):
+        sw = 's%d' % (i + 1)
+        MN.add_switch(sw)
+    _wait()
 
-print "more switch and link"
-addSwitch(mn, 's6')
-addLink(mn, 's6', 's3')
-addLink(mn, 's6', 's4')
-addLink(mn, 's6', 's5')
-time.sleep(5)
+    ### Added some link
+    print """
+Added some link
+  addLink   (s5, s6), (s6, s7) ...(s10, s1)
+"""
+    for i in range(4, 10):
+        sw1 = 's%d' % (i + 1)
+        sw2 = 's%d' % (i + 2)
+        if sw1 == 's10':
+            sw2 = 's1'
+        MN.add_link(sw1, sw2)
+    _wait()
 
-print "delete some links"
-delLink(mn, 's2', 's3')
-delLink(mn, 's5', 's4')
-time.sleep(5)
+    ### Added some link
+    print """
+Delete some links
+  delLink  (s8, s9), (s9, s10), (s10, s1)
+"""
+    MN.del_link('s8', 's9')
+    MN.del_link('s9', 's10')
+    MN.del_link('s10', 's1')
+    _wait()
 
-print "delete a switch"
-delSwitch(mn, 's3')
-time.sleep(10)
+    ### Delete some switch
+    print """
+Delete some switch
+  delSwitch  s6, s7, s8, s9, s10
+"""
+    MN.del_switch('s6')
+    MN.del_switch('s7')
+    MN.del_switch('s8')
+    MN.del_switch('s9')
+    MN.del_switch('s10')
+    _wait(10)
 
-#CLI(mn)
+    ### Added some flow
+    print """
+Added some flow
+    dpid   : 1
+    rules  : dl_type=0x0800(ip), ip_proto=6(tcp), tp_src=100-104
+    actions: OUTPUT: 2
+"""
+    path = _FLOW_PATH_BASE % {'cmd': 'add'}
+    for tp_src in range(100, 105):
+        body = {}
+        body['dpid'] = 1
+        body['match'] = {'dl_type': ETH_TYPE_IP,
+                         'nw_proto': IPPROTO_TCP,
+                         'tp_src': tp_src}
+        body['actions'] = [{'type': "OUTPUT", "port": 2}]
+        _do_request(path, 'POST', json.dumps(body))
+    _wait(10)
 
-mn.stop()
-print "delete all"
+    ### Modify some flow
+    print """
+Modify some flow
+    dpid   : 1
+    rules  : dl_type=0x0800(ip), ip_proto=6(tcp), tp_src=100-102
+    actions: OUTPUT: 2->1
+"""
+    path = _FLOW_PATH_BASE % {'cmd': 'modify'}
+    for tp_src in range(100, 103):
+        body = {}
+        body['dpid'] = 1
+        body['match'] = {'dl_type': ETH_TYPE_IP,
+                         'nw_proto': IPPROTO_TCP,
+                         'tp_src': tp_src}
+        body['actions'] = [{'type': "OUTPUT", "port": 1}]
+        _do_request(path, 'POST', json.dumps(body))
+    _wait(10)
+
+    ### Delete some flow
+    print """
+Delete some flow
+    dpid   : 1
+    rules  : dl_type=0x0800(ip), ip_proto=6(tcp), tp_src=100-102
+"""
+    path = _FLOW_PATH_BASE % {'cmd': 'delete'}
+    for tp_src in range(100, 103):
+        body = {}
+        body['dpid'] = 1
+        body['match'] = {'dl_type': ETH_TYPE_IP,
+                         'nw_proto': IPPROTO_TCP,
+                         'tp_src': tp_src}
+        _do_request(path, 'POST', json.dumps(body))
+    _wait(10)
+
+    ### Delete all flows
+    print """
+Delete all flows
+    dpid   : 1
+"""
+    path = _FLOW_PATH_BASE % {'cmd': 'clear'}
+    path += '/1'
+    _do_request(path, 'DELETE')
+    _wait()
+
+    ### Delete all switches
+    print "Delete all switches"
+    MN.stop()
+    print "Finished"
+
+
+def _wait(wait=5):
+    print "  ...waiting %s" % wait
+    time.sleep(wait)
+
+
+def _do_request(path, method="GET", body=None):
+    address = '%s:%s' % (CONF.ofp_listen_host, CONF.rest_listen_port)
+    conn = httplib.HTTPConnection(address)
+    conn.request(method, path, body)
+    res = conn.getresponse()
+    if res.status in (httplib.OK,
+                      httplib.CREATED,
+                      httplib.ACCEPTED,
+                      httplib.NO_CONTENT):
+        return res
+
+    raise httplib.HTTPException(
+        res, 'code %d reason %s' % (res.status, res.reason),
+        res.getheaders(), res.read())
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except:
+        MN.stop()
+        raise
