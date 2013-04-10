@@ -21,6 +21,7 @@ LOG = logging.getLogger('ryu.gui')
 
 _FLOW_PATH_BASE = '/stats/flow/'
 
+
 def get_flows(address, dpid):
     assert type(dpid) == int
 
@@ -30,6 +31,7 @@ def get_flows(address, dpid):
         return flows
     except (IOError, httplib.HTTPException) as e:
         raise
+
 
 def _do_request(address, path):
     conn = httplib.HTTPConnection(address)
