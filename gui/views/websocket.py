@@ -1,5 +1,19 @@
+# Copyright (C) 2013 Nippon Telegraph and Telephone Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
-import gevent
 import json
 
 import view_base
@@ -13,10 +27,7 @@ class WebsocketView(view_base.ViewBase):
         super(WebsocketView, self).__init__()
         self.ws = ws
         self.address = None
-        self.topo = {}
-        self.watcher = TopologyWatcher(
-            update_handler=self.update_handler,
-            rest_error_handler=self.rest_error_handler)
+        self.watcher = None
 
     def run(self):
         while True:
@@ -36,7 +47,6 @@ class WebsocketView(view_base.ViewBase):
         LOG.info('Websocket: closed.')
         return self.null_response()
 
-#    def _send_message(self, msg_name, address, **body):
     def _send_message(self, msg_name, address, body=None):
         message = {}
         message['message'] = msg_name
@@ -67,12 +77,9 @@ class WebsocketView(view_base.ViewBase):
         self.watcher = TopologyWatcher(
             update_handler=self.update_handler,
             rest_error_handler=self.rest_error_handler)
-        self.topo = {}
         self.watcher.start(address)
 
     def _watching_switch_update(self, body):
-        # if dpid:
-        #     #TODO: get flows
         pass
 
     # called by watcher when topology update
@@ -162,6 +169,5 @@ class WebsocketView(view_base.ViewBase):
 
     # called by watcher when rest api error
     def rest_error_handler(self, address, e):
-        LOG.debug('REST API Error: %s' % e)
-        [host, port] = address.split(':')
+        LOG.debug('REST API Error: %s', e)
         self._send_message('rest_disconnected', address)
