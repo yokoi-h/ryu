@@ -17,8 +17,7 @@ import time
 import json
 import httplib
 
-import ryu.contrib
-from oslo.config import cfg
+from ryu.contrib.oslo.config import cfg
 from mn_ctl import MNCtl
 from ryu.ofproto.ether import ETH_TYPE_ARP, ETH_TYPE_IP
 from ryu.ofproto.inet import IPPROTO_TCP
