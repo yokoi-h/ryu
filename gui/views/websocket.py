@@ -14,8 +14,9 @@ class WebsocketView(view_base.ViewBase):
         self.ws = ws
         self.address = None
         self.topo = {}
-        self.watcher = TopologyWatcher(update_handler=self.update_handler,
-                        rest_error_handler=self.rest_error_handler)
+        self.watcher = TopologyWatcher(
+            update_handler=self.update_handler,
+            rest_error_handler=self.rest_error_handler)
 
     def run(self):
         while True:
@@ -63,8 +64,9 @@ class WebsocketView(view_base.ViewBase):
         if self.watcher:
             self.watcher.stop()
 
-        self.watcher = TopologyWatcher(update_handler=self.update_handler,
-                        rest_error_handler=self.rest_error_handler)
+        self.watcher = TopologyWatcher(
+            update_handler=self.update_handler,
+            rest_error_handler=self.rest_error_handler)
         self.topo = {}
         self.watcher.start(address)
 
@@ -153,7 +155,7 @@ class WebsocketView(view_base.ViewBase):
             L = {'p1': p1.copy(), 'p2': p2.copy()}
             L['p1']['peer'] = p2.copy()
             L['p2']['peer'] = p1.copy()
-            
+
             body.append(L)
 
         return body
