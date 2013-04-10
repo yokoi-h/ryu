@@ -16,29 +16,31 @@
 import time
 import json
 import httplib
+from argparse import ArgumentParser
 
-from ryu.contrib.oslo.config import cfg
 from mn_ctl import MNCtl
 from ryu.ofproto.ether import ETH_TYPE_ARP, ETH_TYPE_IP
 from ryu.ofproto.inet import IPPROTO_TCP
 
 
-CONF = cfg.CONF
-CONF.register_cli_opts([
-    cfg.StrOpt('ofp-listen-host', default='127.0.0.1',
-               help='openflow tcp listen host.'),
-    cfg.IntOpt('ofp-listen-port', default=6633,
-               help='openflow tcp listen port.'),
-    cfg.IntOpt('rest-listen-port', default=8080,
-               help='rest api listen port')
-])
+parser = ArgumentParser(
+    description='Topology auto creation '
+                'and modification for test.')
+parser.add_argument('--ryu_host', dest='ryu_host',
+                    default='127.0.0.1', help='ryu ofp listen host')
+parser.add_argument('--ryu_port', dest='ryu_port',
+                    type=int, default=6633, help='ryu ofp listen port')
+parser.add_argument('--rest_port', dest='rest_port',
+                    type=int, default=8080, help='rest api listen port')
+args = parser.parse_args()
 
 
 _FLOW_PATH_BASE = '/stats/flowentry/%(cmd)s'
 MN = MNCtl()
 
+
 def main():
-    MN.add_controller(CONF.ofp_listen_host, CONF.ofp_listen_port)
+    MN.add_controller(args.ryu_host, args.ryu_port)
 
     ### Initializeing
     print """
@@ -179,7 +181,7 @@ def _wait(wait=5):
 
 
 def _do_request(path, method="GET", body=None):
-    address = '%s:%s' % (CONF.ofp_listen_host, CONF.rest_listen_port)
+    address = '%s:%s' % (args.ryu_host, args.rest_port)
     conn = httplib.HTTPConnection(address)
     conn.request(method, path, body)
     res = conn.getresponse()
