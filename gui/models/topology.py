@@ -72,7 +72,7 @@ class Switch(object):
     def __init__(self, dpid, ports):
         assert type(dpid) == int
         assert type(ports) == list
-        
+
         self.dpid = dpid
         self.ports = ports
 
@@ -168,7 +168,7 @@ class Topology(dict):
     # TopologyDelta = new_Topology - old_Topology
     def __sub__(self, old):
         assert type(old) == Topology
-        
+
         added = Topology()
         deleted = Topology()
         for k in self.iterkeys():
@@ -230,8 +230,10 @@ class TopologyWatcher(object):
                 switches_json = self.tc.list_switches().read()
                 links_json = self.tc.list_links().read()
             except (SocketError, HTTPException) as e:
-                LOG.debug('TopologyWatcher: REST API(%s) is not avaliable. wait %d secs...' %
-                          (self.address, self._REST_RETRY_WAIT))
+                LOG.debug('TopologyWatcher: REST API(%s) is not avaliable.' %
+                          self.address)
+                LOG.debug('        wait %d secs...' %
+                          self._REST_RETRY_WAIT)
                 self._call_rest_error_handler(e)
                 gevent.sleep(self._REST_RETRY_WAIT)
                 continue
@@ -241,7 +243,7 @@ class TopologyWatcher(object):
                 new_topo = Topology(switches_json, links_json)
                 delta = new_topo - self.topo
                 self.topo = new_topo
-                
+
                 self._call_update_handler(delta)
 
             gevent.sleep(self._LOOP_WAIT)
@@ -263,6 +265,7 @@ class TopologyWatcher(object):
     def _call_update_handler(self, delta):
         if self.update_handler:
             self.update_handler(self.address, delta)
+
 
 def handler(address, delta):
     print delta

@@ -14,8 +14,9 @@ class WebsocketView(view_base.ViewBase):
         self.ws = ws
         self.address = None
         self.topo = {}
-        self.watcher = TopologyWatcher(update_handler=self.update_handler,
-                        rest_error_handler=self.rest_error_handler)
+        self.watcher = TopologyWatcher(
+            update_handler=self.update_handler,
+            rest_error_handler=self.rest_error_handler)
 
     def run(self):
         while True:
@@ -63,8 +64,9 @@ class WebsocketView(view_base.ViewBase):
         if self.watcher:
             self.watcher.stop()
 
-        self.watcher = TopologyWatcher(update_handler=self.update_handler,
-                        rest_error_handler=self.rest_error_handler)
+        self.watcher = TopologyWatcher(
+            update_handler=self.update_handler,
+            rest_error_handler=self.rest_error_handler)
         self.topo = {}
         self.watcher.start(address)
 
@@ -153,117 +155,10 @@ class WebsocketView(view_base.ViewBase):
             L = {'p1': p1.copy(), 'p2': p2.copy()}
             L['p1']['peer'] = p2.copy()
             L['p2']['peer'] = p1.copy()
-            
+
             body.append(L)
 
         return body
-    
-    def _update_switches(self, added, deleted):
-        send = {}
-        send['added'] = []
-        for a in added:
-            if not self._is_topo([a.dpid]):
-                self.topo[a.dpid] = a.to_dict()
-                ports = {}
-                for p in a.ports:
-                    ports[p.port_no] = p.to_dict()
-                    ports[p.port_no]['peer'] = {}
-                self.topo[a.dpid]['ports'] = ports
-                # TODO: has not name...
-                self.topo[a.dpid]['name'] = 's' + str(a.dpid)
-                send['added'].append(a)
-
-        send['deleted'] = []
-        for d in deleted:
-            del self.topo[d.dpid]
-            send['deleted'].append(d)
-        return send
-
-    def _update_ports(self, added, deleted):
-        send = {}
-        send['added'] = []
-        for a in added:
-            if not self._is_topo([a.dpid, 'ports', a.port_no]):
-                self.topo[a.dpid]['ports'][a.port_no] = a.to_dict()
-                self.topo[a.dpid]['ports']['peer'] = {}
-                send['added'].append(a)
-
-        send['deleted'] = []
-        for d in deleted:
-            if self._is_topo([d.dpid, 'ports', d.port_no]):
-                del self.topo[d.dpid]['ports'][d.port_no]
-                send['deleted'].append(d)
-        return send
-
-    def _update_links(self, added, deleted):
-        send = {}
-        send['added'] = []
-        for a in added:
-            if not self._is_topo([a.src.dpid, 'ports', a.src.port_no, 'peer']):
-                self.topo[a.src.dpid]['ports'] \
-                    [a.src.port_no]['peer'] = a.dst.to_dict()
-                if self._is_topo([a.dst.dpid, 'ports', a.dst.port_no, 'peer']):
-                    send['added'].append(a)
-
-        send['deleted'] = []
-        for d in deleted:
-            need = 0
-            if self._is_topo([d.src.dpid, 'ports', d.src.port_no, 'peer']):
-                self.topo[d.src.dpid]['ports'][d.src.port_no]['peer'] = {}
-                need += 1
-            if self._is_topo([d.dst.dpid, 'ports', d.dst.port_no, 'peer']):
-                self.topo[d.dst.dpid]['ports'][d.dst.port_no]['peer'] = {}
-                need += 1
-            if need == 2:
-                send['deleted'].append(d)
-        return send
-
-    def _is_topo(self, keyes):
-        val = self.topo
-        for key in keyes:
-            val = val.get(key, {})
-        return val
-
-    def _send_delta(self, address, send):
-        self._send_message('rest_connected', address)
-        body = []
-        for s in send['switches']['added']:
-            body.append(self._is_topo([s.dpid]))
-        if body:
-            self._send_message('add_switches', address, body)
-
-        body = [{'dpid': s.dpid} for s in send['switches']['deleted']]
-        if body:
-            self._send_message('del_switches', address, body)
-
-        body = []
-        for p in send['ports']['added']:
-            body.append(self._is_topo([p.dpid, 'ports', p.port_no]))
-        if body:
-            self._send_message('add_ports', address, body)
-
-        body = []
-        for p in send['ports']['deleted']:
-            body.append({'dpid': p.dpid, 'port_no': p.port_no})
-        if body:
-            self._send_message('del_ports', address, body)
-
-        body = []
-        for l in send['links']['added']:
-            p1 = self._is_topo([l.src.dpid, 'ports', l.src.port_no])
-            p2 = self._is_topo([l.dst.dpid, 'ports', l.dst.port_no])
-            body.append({'p1': p1, 'p2': p2})
-        if body:
-            self._send_message('add_links', address, body)
-
-        body = []
-        for l in send['links']['deleted']:
-            p1 = l.src.to_dict()
-            p2 = l.dst.to_dict()
-            body.append({'p1': p1, 'p2': p2})
-        if body:
-            self._send_message('del_links', address, body)
-
 
     # called by watcher when rest api error
     def rest_error_handler(self, address, e):
