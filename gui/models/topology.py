@@ -142,23 +142,49 @@ class Topology(dict):
         for switch in self['switches']:
             self['ports'].extend(switch.ports)
 
+    def peer(self, port):
+        for link in self['links']:
+            if link.src == port:
+                return link.dst
+            elif link.dst == port:
+                return link.src
+
+        return None
+
+    def attached(self, port):
+        for switch in self['switches']:
+            if port in switch.port:
+                return switch
+
+        return None
+
+    def neighbors(self, switch):
+        ns = []
+        for port in switch.port:
+            ns.append(self.attached(self.peer(port)))
+
+        return ns
+
     # TopologyDelta = new_Topology - old_Topology
     def __sub__(self, old):
         assert type(old) == Topology
         
-        added = {}
-        deleted = {}
+        added = Topology()
+        deleted = Topology()
         for k in self.iterkeys():
             new_set = set(self[k])
             old_set = set(old[k])
 
-            added[k] = new_set - old_set
-            deleted[k] = old_set - new_set
+            added[k] = list(new_set - old_set)
+            deleted[k] = list(old_set - new_set)
 
         return TopologyDelta(added, deleted)
 
     def __str__(self):
-        return 'Topology<links=%s>' % (self.links)
+        return 'Topology<switches=%d, ports=%d, links=%d>' % (
+            len(self['switches']),
+            len(self['ports']),
+            len(self['links']))
 
 
 class TopologyDelta(object):
@@ -238,7 +264,7 @@ class TopologyWatcher(object):
         if self.update_handler:
             self.update_handler(self.address, delta)
 
-def handler(delta):
+def handler(address, delta):
     print delta
 
 if __name__ == '__main__':
