@@ -49,7 +49,6 @@ class FlowView(view_base.ViewBase):
             actions = []
             rules = []
             stats = []
-            duration = 0
             for name, val in flow.items():
                 if name == 'actions':
                     actions = val
@@ -58,7 +57,6 @@ class FlowView(view_base.ViewBase):
                         rules.append(rule + '=' + str(v))
                 else:
                     stats.append(name + '=' + str(val))
-#            res['flows'].append(', '.join(stats + rules + actions))
             res['flows'].append({'stats': ', '.join(stats),
                                  'rules': ', '.join(rules),
                                  'actions': ', '.join(actions)})
