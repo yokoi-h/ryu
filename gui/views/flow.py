@@ -63,18 +63,16 @@ class FlowView(view_base.ViewBase):
 
     def _to_client_rules(self, rules):
         for name, val in rules.items():
-            # delete val = int 0
-            if name in ['in_port', 'dl_type', 'nw_proto', 'tp_dst', 'tp_dst',
+            # hide default values for GUI
+            if name in ['in_port', 'dl_type', 'nw_proto', 'tp_src', 'tp_dst',
                         'dl_vlan', 'dl_vlan_pcp']:
                 if val == 0:
                     del rules[name]
 
-            # delete val = str '0.0.0.0'
             if name in ['nw_dst', 'nw_src']:
                 if val == '0.0.0.0':
                     del rules[name]
 
-            # delete val = str '00:00:00:00:00:00'
             if name in ['dl_dst', 'dl_src']:
                 if val == '00:00:00:00:00:00':
                     del rules[name]
@@ -82,7 +80,7 @@ class FlowView(view_base.ViewBase):
 
     def _to_client_stats(self, stats):
         for name, val in stats.items():
-            # delete val == int 0
+            # hide default values for GUI
             if name in ['hard_timeout', 'idle_timeout',
                         'cookie']:
                 if val == 0:
