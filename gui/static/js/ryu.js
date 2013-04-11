@@ -492,6 +492,15 @@ var utils = {
     if (dpid != _DATA.watching) return;
     utils.clearFlowList()
 
+    // sorted duration
+    flows.sort(function(a, b){
+      if (a.duration_sec < b.duration_sec) return -1;
+      if (a.duration_sec > b.duration_sec) return 1;
+      if (a.duration_nsec < b.duration_nsec) return -1;
+      if (a.duration_nsec > b.duration_nsec) return 1;
+      return 0;
+    });
+
     var list_table = document.getElementById("flow-list-table");
     for (var i in flows) {
       var tr = list_table.insertRow(-1);
@@ -510,7 +519,17 @@ var utils = {
       stats.appendChild(statsTitle);
       var statsVal = document.createElement('span');
       statsVal.className = 'flow-item-value';
-      statsVal.innerHTML = flows[i].stats;
+      // sort key
+      var texts = [];
+      var sortKey = ['table_id', 'priority', 'duration_sec', 'duration_nsec'];
+      for (var k in sortKey) {
+        texts.push(sortKey[k] + '=' + flows[i].stats[sortKey[k]]);
+        delete flows[i].stats[sortKey[k]];
+      }
+      for (var key in flows[i].stats) {
+        texts.push(key + '=' + flows[i].stats[key]);
+      }
+      statsVal.innerHTML = texts.join(', ');
       stats.appendChild(statsVal);
 
       // rules
@@ -523,7 +542,11 @@ var utils = {
       rules.appendChild(rulesTitle);
       var rulesVal = document.createElement('span');
       rulesVal.className = 'flow-item-value';
-      rulesVal.innerHTML = flows[i].rules;
+      var texts = [];
+      for (var key in flows[i].rules) {
+        texts.push(key + '=' + flows[i].rules[key]);
+      }
+      rulesVal.innerHTML = texts.join(', ');
       rules.appendChild(rulesVal);
 
       // actions
@@ -536,7 +559,7 @@ var utils = {
       actions.appendChild(actionsTitle);
       var actionsVal = document.createElement('span');
       actionsVal.className = 'flow-item-value';
-      actionsVal.innerHTML = flows[i].actions;
+      actionsVal.innerHTML = flows[i].actions.join(', ');
       actions.appendChild(actionsVal);
 
       utils._repainteRows('flow-list-table');

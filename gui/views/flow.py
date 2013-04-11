@@ -12,7 +12,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import re
 import logging
+
 import view_base
 from models import proxy
 
@@ -39,25 +42,49 @@ class FlowView(view_base.ViewBase):
     def _dump_flows(self):
         address = '%s:%s' % (self.host, self.port)
         flows = proxy.get_flows(address, int(self.dpid))
-        res = {}
-        res['host'] = self.host
-        res['port'] = self.port
-        res['dpid'] = self.dpid
-        res['flows'] = []
+
+        res = {'host': self.host,
+               'port': self.port,
+               'dpid': self.dpid,
+               'flows': []}
 
         for flow in flows:
-            actions = []
-            rules = []
-            stats = []
-            for name, val in flow.items():
-                if name == 'actions':
-                    actions = val
-                elif name == 'match':
-                    for rule, v in val.items():
-                        rules.append(rule + '=' + str(v))
-                else:
-                    stats.append(name + '=' + str(val))
-            res['flows'].append({'stats': ', '.join(stats),
-                                 'rules': ', '.join(rules),
-                                 'actions': ', '.join(actions)})
+            actions = self._to_client_actions(flow.pop('actions'))
+            rules = self._to_client_rules(flow.pop('match'))
+            stats = self._to_client_stats(flow)
+            res['flows'].append({'stats': stats,
+                                 'rules': rules,
+                                 'actions': actions})
         return self.json_response(res)
+
+    def _to_client_actions(self, actions):
+        # TODO:XXX
+        return actions
+
+    def _to_client_rules(self, rules):
+        for name, val in rules.items():
+            # delete val = int 0
+            if name in ['in_port', 'dl_type', 'nw_proto', 'tp_dst', 'tp_dst',
+                        'dl_vlan', 'dl_vlan_pcp']:
+                if val == 0:
+                    del rules[name]
+
+            # delete val = str '0.0.0.0'
+            if name in ['nw_dst', 'nw_src']:
+                if val == '0.0.0.0':
+                    del rules[name]
+
+            # delete val = str '00:00:00:00:00:00'
+            if name in ['dl_dst', 'dl_src']:
+                if val == '00:00:00:00:00:00':
+                    del rules[name]
+        return rules
+
+    def _to_client_stats(self, stats):
+        for name, val in stats.items():
+            # delete val == int 0
+            if name in ['hard_timeout', 'idle_timeout',
+                        'cookie']:
+                if val == 0:
+                    del stats[name]
+        return stats
