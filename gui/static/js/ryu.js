@@ -494,10 +494,14 @@ var utils = {
 
     // sorted duration
     flows.sort(function(a, b){
-      if (a.duration_sec < b.duration_sec) return -1;
-      if (a.duration_sec > b.duration_sec) return 1;
-      if (a.duration_nsec < b.duration_nsec) return -1;
-      if (a.duration_nsec > b.duration_nsec) return 1;
+      if (a.stats.table_id < b.stats.table_id) return -1;
+      if (a.stats.table_id > b.stats.table_id) return 1;
+      if (a.stats.priority > b.stats.priority) return -1;
+      if (a.stats.priority < b.stats.priority) return 1;
+      if (a.stats.duration_sec > b.stats.duration_sec) return -1;
+      if (a.stats.duration_sec < b.stats.duration_sec) return 1;
+      if (a.stats.duration_nsec > b.stats.duration_nsec) return -1;
+      if (a.stats.duration_nsec < b.stats.duration_nsec) return 1;
       return 0;
     });
 
