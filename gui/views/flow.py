@@ -12,7 +12,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import re
 import logging
+
 import view_base
 from models import proxy
 
@@ -39,25 +42,45 @@ class FlowView(view_base.ViewBase):
     def _dump_flows(self):
         address = '%s:%s' % (self.host, self.port)
         flows = proxy.get_flows(address, int(self.dpid))
-        res = {}
-        res['host'] = self.host
-        res['port'] = self.port
-        res['dpid'] = self.dpid
-        res['flows'] = []
+
+        res = {'host': self.host,
+               'port': self.port,
+               'dpid': self.dpid,
+               'flows': []}
 
         for flow in flows:
-            actions = []
-            rules = []
-            stats = []
-            for name, val in flow.items():
-                if name == 'actions':
-                    actions = val
-                elif name == 'match':
-                    for rule, v in val.items():
-                        rules.append(rule + '=' + str(v))
-                else:
-                    stats.append(name + '=' + str(val))
-            res['flows'].append({'stats': ', '.join(stats),
-                                 'rules': ', '.join(rules),
-                                 'actions': ', '.join(actions)})
+            actions = self._to_client_actions(flow.pop('actions'))
+            rules = self._to_client_rules(flow.pop('match'))
+            stats = self._to_client_stats(flow)
+            res['flows'].append({'stats': stats,
+                                 'rules': rules,
+                                 'actions': actions})
         return self.json_response(res)
+
+    def _to_client_actions(self, actions):
+        # TODO:XXX
+        return actions
+
+    def _to_client_rules(self, rules):
+        for name, val in rules.items():
+            if self._is_default(val):
+                del rules[name]
+        return rules
+
+    def _to_client_stats(self, stats):
+        required = [
+            'duration_sec',
+            'duration_nsec',
+            'table_id',
+            'priority',
+            'packet_count',
+            'byte_count',
+        ]
+        for name, val in stats.items():
+            if not name in required:
+                if self._is_default(val):
+                    del stats[name]
+        return stats
+
+    def _is_default(self, val):
+        return re.search('^[0:\.]+$', str(val))
