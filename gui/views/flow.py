@@ -63,24 +63,24 @@ class FlowView(view_base.ViewBase):
 
     def _to_client_rules(self, rules):
         for name, val in rules.items():
-            if self._is_default(val):
-                del rules[name]
+            # delete val = int 0
+            if name in ['in_port', 'dl_type', 'nw_proto', 'tp_dst', 'tp_dst',
+                        'dl_vlan', 'dl_vlan_pcp']:
+                if val == 0: del rules[name]
+
+            # delete val = str '0.0.0.0'
+            if name in ['nw_dst', 'nw_src']:
+                if val == '0.0.0.0': del rules[name]
+
+            # delete val = str '00:00:00:00:00:00'
+            if name in ['dl_dst', 'dl_src']:
+                if val == '00:00:00:00:00:00': del rules[name]
         return rules
 
     def _to_client_stats(self, stats):
-        required = [
-            'duration_sec',
-            'duration_nsec',
-            'table_id',
-            'priority',
-            'packet_count',
-            'byte_count',
-        ]
         for name, val in stats.items():
-            if not name in required:
-                if self._is_default(val):
-                    del stats[name]
+            # delete val == int 0
+            if name in ['hard_timeout', 'idle_timeout',
+                        'cookie']:
+                if val == 0: del stats[name]
         return stats
-
-    def _is_default(self, val):
-        return re.search('^[0:\.]+$', str(val))
