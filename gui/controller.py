@@ -28,7 +28,7 @@ parser.add_argument('--host', dest='host', default='0.0.0.0')
 parser.add_argument('--port', dest='port', type=int, default=8000)
 args = parser.parse_args()
 
-app = Flask('ryu_gui')
+app = Flask(__name__.split('.')[0])
 logging.basicConfig(level=logging.DEBUG,
                     stream=sys.stderr,
                     format="%(asctime)-15s [%(levelname)-4s] %(message)s")
