@@ -2,3 +2,5 @@ gevent>=0.13
 routes
 webob>=1.0.8
 paramiko
+flask
+gevent-websocket
