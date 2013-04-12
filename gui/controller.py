@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import ArgumentParser
 import sys
 import logging
 import inspect
@@ -22,9 +23,10 @@ from flask import Flask, request, abort
 from views.view_base import ViewBase
 
 
-LISTEN_HOST = '0.0.0.0'
-LISTEN_PORT = 8000
-
+parser = ArgumentParser()
+parser.add_argument('--host', dest='host', default='0.0.0.0')
+parser.add_argument('--port', dest='port', type=int, default=8000)
+args = parser.parse_args()
 
 app = Flask('ryu_gui')
 logging.basicConfig(level=logging.DEBUG,
@@ -84,7 +86,7 @@ def _view(view_name, *args, **kwargs):
 
 
 if __name__ == '__main__':
-    server = pywsgi.WSGIServer((LISTEN_HOST, LISTEN_PORT),
+    server = pywsgi.WSGIServer((args.host, args.port),
                                app, handler_class=WebSocketHandler)
     app.logger.info('Running on %s', server.address)
     server.serve_forever()
