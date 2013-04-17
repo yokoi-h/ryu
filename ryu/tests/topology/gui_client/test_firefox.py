@@ -21,7 +21,7 @@ import gui_test
 from selenium import webdriver
 
 
-class TestChrome(gui_test.TestGUI):
+class TestFirefox(gui_test.TestGUI):
 
     @classmethod
     def setUpClass(cls):
