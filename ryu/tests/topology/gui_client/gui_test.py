@@ -37,11 +37,6 @@ REST_PORT = '8080'
 RYU_HOST = '127.0.0.1'
 RYU_PORT = '6633'
 
-# mininet controller address
-MN_HOST = '127.0.0.1'
-MN_PORT = '18000'
-MN_CTL_URL = 'http://%s:%s' % (MN_HOST, MN_PORT)
-
 
 class TestGUI(unittest.TestCase):
     @classmethod
