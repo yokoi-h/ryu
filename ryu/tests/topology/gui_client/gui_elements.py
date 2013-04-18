@@ -120,8 +120,14 @@ class Topology(ElementBase):
     def switches(self):
         return self._get_els(By.CSS_SELECTOR, "#topology > div.switch")
 
-    def get_switch(self, dpid):
-        return self._get_el(By.ID, "node-switch-%d" % int(dpid))
+    def get_switch(self, dpid, wait=False, timeout=30):
+        id_ = "node-switch-%d" % int(dpid)
+        el = self._get_el(By.ID, id_)
+        while(wait and timeout and not el):
+            time.sleep(1)
+            timeout -= 1
+            el = self._get_el(By.ID, id_)
+        return el
 
 
 class LinkList(ElementBase):
