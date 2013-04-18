@@ -39,23 +39,30 @@ RYU_PORT = '6633'
 
 
 class TestGUI(unittest.TestCase):
+    # called before the TestCase run.
     @classmethod
     def setUpClass(cls):
-        # set the driver of the test browser.
-        # cls.driver = webdriver.Firefix()
-        ok_(False, 'cls.driver does not setting.')
+        cls._set_driver()
+        ok_(cls.driver, 'driver dose not setting.')
+        cls.el = gui_elements.Elements(cls.driver)
+        cls.el.register_contents()
 
+    # called after the TestCase run.
     @classmethod
     def tearDownClass(cls):
         cls.driver.quit()
 
+    # called before an individual test_* run.
     def setUp(self):
-        if not hasattr(self, 'el'):
-            self.el = gui_elements.Elements(self.driver)
-            self.el.register_contents()
-
         self.driver.get(BASE_URL + "/")
         self.el.wait_for_displayed(self.el.dialog.body())
+
+    # called in to setUpClass().
+    @classmethod
+    def _set_driver(cls):
+        # set the driver of the test browser.
+        # self.driver = webdriver.Firefox()
+        cls.driver = None
 
     def mouse(self):
         return ActionChains(self.driver)

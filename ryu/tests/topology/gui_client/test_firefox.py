@@ -22,9 +22,8 @@ from selenium import webdriver
 
 
 class TestFirefox(gui_test.TestGUI):
-
     @classmethod
-    def setUpClass(cls):
+    def _set_driver(cls):
         cls.driver = webdriver.Firefox()
 
 

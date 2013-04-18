@@ -22,9 +22,8 @@ from selenium import webdriver
 
 
 class TestChrome(gui_test.TestGUI):
-
     @classmethod
-    def setUpClass(cls):
+    def _set_driver(cls):
         # ChromeDriver executable needs to be available in the path.
         # Please download from
         #   https://code.google.com/p/chromedriver/downloads/list
