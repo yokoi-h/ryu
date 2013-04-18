@@ -13,8 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import ArgumentParser
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+
 from mininet.net import Mininet
 from mininet.node import RemoteController, OVSKernelSwitch
+
+
+parser = ArgumentParser()
+parser.add_argument('--listen-host', dest='host', default='127.0.0.1')
+parser.add_argument('--listen-port', dest='port', type=int, default=18000)
+args = parser.parse_args()
 
 
 class MNCtl(object):
@@ -56,3 +65,28 @@ class MNCtl(object):
 
     def stop(self):
         self.mn.stop()
+
+
+class MNCtlServer(MNCtl):
+    def __init__(self):
+        super(MNCtlServer, self).__init__()
+        self.server = SimpleXMLRPCServer((args.host, args.port),
+                                         allow_none=True)
+
+        self._register_function(self.add_controller)
+        self._register_function(self.add_switch)
+        self._register_function(self.del_switch)
+        self._register_function(self.add_link)
+        self._register_function(self.del_link)
+        self._register_function(self.stop)
+
+        print "Running on %s:%d" % (args.host, args.port)
+        self.server.serve_forever()
+
+    def _register_function(self, fnc):
+        self.server.register_function(fnc)
+        print "register %s" % (fnc.__name__)
+
+
+if __name__ == "__main__":
+    MNCtlServer()
