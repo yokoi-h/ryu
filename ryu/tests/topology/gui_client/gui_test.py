@@ -15,6 +15,7 @@
 
 import re
 import unittest
+import xmlrpclib
 from nose.tools import ok_, eq_
 from nose.plugins.skip import SkipTest
 from selenium.webdriver.common.action_chains import ActionChains
@@ -35,11 +36,17 @@ REST_PORT = '8080'
 RYU_HOST = '127.0.0.1'
 RYU_PORT = '6633'
 
+# mininet controller address
+MN_HOST = '127.0.0.1'
+MN_PORT = '18000'
+MN_CTL_URL = 'http://%s:%s' % (MN_HOST, MN_PORT)
+
 
 class TestGUI(unittest.TestCase):
     # called before the TestCase run.
     @classmethod
     def setUpClass(cls):
+        cls._mn = None
         cls._set_driver()
         ok_(cls.driver, 'driver dose not setting.')
 
@@ -61,6 +68,11 @@ class TestGUI(unittest.TestCase):
         self.driver.get(BASE_URL + "/")
         self.util.wait_for_displayed(self.dialog.body)
 
+    # called after an individual test_* run.
+    def tearDown(self):
+        if self._mn is not None:
+            self._mn.stop()
+
     # called in to setUpClass().
     @classmethod
     def _set_driver(cls):
@@ -68,8 +80,29 @@ class TestGUI(unittest.TestCase):
         # self.driver = selenium.webdriver.Firefox()
         cls.driver = None
 
+    def _get_mininet_controller(self):
+        self._mn = xmlrpclib.ServerProxy(MN_CTL_URL, allow_none=True)
+        self._mn.add_controller(RYU_HOST, int(RYU_PORT))
+        return self._mn
+
     def mouse(self):
         return ActionChains(self.driver)
+
+    def _rest_connect(self):
+        if not self.dialog.body.is_displayed():
+            # dialog open
+            self.menu.dialog.click()
+            self.utils.wait_for_displayed(self.diaplog.body)
+
+        # input address
+        self.dialog.host.clear()
+        self.dialog.host.send_keys(REST_HOST)
+        self.dialog.port.clear()
+        self.dialog.port.send_keys(REST_PORT)
+
+        # click "launch"
+        self.dialog.launch.click()
+        self.util.wait_for_text(self.topology.body, "Connected")
 
     def test_default(self):
         ## input-dialog
@@ -177,6 +210,21 @@ class TestGUI(unittest.TestCase):
         # click "Launch"
         self.dialog.launch.click()
         ok_(self.util.wait_for_text(self.topology.body, "Connected"))
+
+    def test_topology_discavery(self):
+        self._rest_connect()
+
+        mn = self._get_mininet_controller()
+        # add switches (dpid 1-5)
+        for i in range(5):
+            sw = 's%d' % (i + 1)
+            mn.add_switch(sw)
+
+        ok_(self.topology.get_switch(1, True))
+        ok_(self.topology.get_switch(2, True))
+        ok_(self.topology.get_switch(3, True))
+        ok_(self.topology.get_switch(4, True))
+        ok_(self.topology.get_switch(5, True))
 
 
 if __name__ == "__main__":
