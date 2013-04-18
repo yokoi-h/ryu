@@ -19,39 +19,9 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 
-_CONTENTS = {}
-
-
-def _set_content(content):
-    def _set_cls_content(cls):
-        cls.name = content
-        _CONTENTS[content] = cls
-        return cls
-    return _set_cls_content
-
-
-class Elements(object):
-    def __init__(self, driver):
-        self._driver = driver
+class DriverUtil(object):
+    def __init__(self):
         self.fail = AssertionError
-
-    def register_contents(self):
-        for content, cls in _CONTENTS.items():
-            setattr(self, content, cls(self._driver))
-
-    def get_el(self, by, value):
-        try:
-            element = self._driver.find_element(by=by, value=value)
-        except NoSuchElementException, e:
-            return False
-        return element
-
-    def get_els(self, by, value):
-        try:
-            elements = self._driver.find_elements(by=by, value=value)
-        except NoSuchElementException, e:
-            return False
-        return elements
 
     def wait_for_displayed(self, el, timeout=30):
         for i in range(timeout):
@@ -68,72 +38,125 @@ class Elements(object):
         self.fail("text time out")
 
 
-@_set_content('menu')
-class Menu(Elements):
+class ElementBase(object):
     def __init__(self, driver):
-        super(Menu, self).__init__(driver)
+        self._driver = driver
+        self.fail = AssertionError
 
-        self.body = lambda: self.get_el(By.ID, "menu")
-        self.titlebar = lambda: self.get_el(By.CSS_SELECTOR,
-                                            "#menu > div.content-title")
-        self.dialog = lambda: self.get_el(By.ID, "jquery-ui-dialog-opener")
-        self.link_list = lambda: self.get_el(By.ID, "menu-link-status")
-        self.flow_list = lambda: self.get_el(By.ID, "menu-flow-entries")
+    def _get_el(self, by, value):
+        try:
+            element = self._driver.find_element(by=by, value=value)
+        except NoSuchElementException, e:
+            return False
+        return element
 
-
-@_set_content('dialog')
-class Dialog(Elements):
-    def __init__(self, driver):
-        super(Dialog, self).__init__(driver)
-
-        self.body = lambda: self.get_el(By.ID, "jquery-ui-dialog")
-        self.host = lambda: self.get_el(By.ID, "jquery-ui-dialog-form-host")
-        self.port = lambda: self.get_el(By.ID, "jquery-ui-dialog-form-port")
-        self.cancel = lambda: self.get_el(By.XPATH,
-                                          "(//button[@type='button'])[2]")
-        self.launch = lambda: self.get_el(By.XPATH,
-                                          "//button[@type='button']")
-        self.close = lambda: self.get_el(By.CSS_SELECTOR,
-                                         "span.ui-icon.ui-icon-closethick")
+    def _get_els(self, by, value):
+        try:
+            elements = self._driver.find_elements(by=by, value=value)
+        except NoSuchElementException, e:
+            return False
+        return elements
 
 
-@_set_content('topology')
-class Topology(Elements):
-    def __init__(self, driver):
-        super(Topology, self).__init__(driver)
+class Menu(ElementBase):
+    @property
+    def body(self):
+        return self._get_el(By.ID, "menu")
 
-        self.body = lambda: self.get_el(By.ID, "topology")
-        self.titlebar = lambda: self.get_el(By.CSS_SELECTOR,
-                                            "#topology > div.content-title")
-        self.switches = lambda: self.get_els(By.CSS_SELECTOR,
-                                             "#topology > div.switch")
-        self.switch = lambda dpid: self.get_el(By.ID,
-                                               "node-switch-%d" % int(dpid))
+    @property
+    def titlebar(self):
+        return self._get_el(By.CSS_SELECTOR,
+                            "#menu > div.content-title")
 
+    @property
+    def dialog(self):
+        return self._get_el(By.ID, "jquery-ui-dialog-opener")
 
-@_set_content('link_list')
-class LinkList(Elements):
-    def __init__(self, driver):
-        super(LinkList, self).__init__(driver)
+    @property
+    def link_list(self):
+        return self._get_el(By.ID, "menu-link-status")
 
-        self.body = lambda: self.get_el(By.ID, "link-list")
-        self.close = lambda: self.get_el(By.XPATH,
-                                         "//div[@id='link-list']/div/div[2]")
-        self.titlebar = lambda: self.get_el(By.CSS_SELECTOR,
-                                            "#link-list > div.content-title")
-        self.rows = lambda: self.get_els(
-            By.CSS_SELECTOR, "#link-list > td.content-table-item")
+    @property
+    def flow_list(self):
+        return self._get_el(By.ID, "menu-flow-entries")
 
 
-@_set_content('flow_list')
-class FlowList(Elements):
-    def __init__(self, driver):
-        super(FlowList, self).__init__(driver)
+class Dialog(ElementBase):
+    @property
+    def body(self):
+        return self._get_el(By.ID, "jquery-ui-dialog")
 
-        self.body = lambda: self.get_el(By.ID, "flow-list")
-        self.close = lambda: self.get_el(By.XPATH,
-                                         "//div[@id='flow-list']/div/div[2]")
-        self.titlebar = lambda: self.get_el(By.CSS_SELECTOR,
-                                            "#flow-list > div.content-title")
-        self.rows = lambda: self.get_els(
-            By.CSS_SELECTOR, "#flow-list > td.content-table-item")
+    @property
+    def host(self):
+        return self._get_el(By.ID, "jquery-ui-dialog-form-host")
+
+    @property
+    def port(self):
+        return self._get_el(By.ID, "jquery-ui-dialog-form-port")
+
+    @property
+    def cancel(self):
+        return self._get_el(By.XPATH, "(//button[@type='button'])[2]")
+
+    @property
+    def launch(self):
+        return self._get_el(By.XPATH, "//button[@type='button']")
+
+    @property
+    def close(self):
+        return self._get_el(By.CSS_SELECTOR, "span.ui-icon.ui-icon-closethick")
+
+
+class Topology(ElementBase):
+    @property
+    def body(self):
+        return self._get_el(By.ID, "topology")
+
+    @property
+    def titlebar(self):
+        return self._get_el(By.CSS_SELECTOR, "#topology > div.content-title")
+
+    @property
+    def switches(self):
+        return self._get_els(By.CSS_SELECTOR, "#topology > div.switch")
+
+    def get_switch(self, dpid):
+        return self._get_el(By.ID, "node-switch-%d" % int(dpid))
+
+
+class LinkList(ElementBase):
+    @property
+    def body(self):
+        return self._get_el(By.ID, "link-list")
+
+    @property
+    def close(self):
+        return self._get_el(By.XPATH, "//div[@id='link-list']/div/div[2]")
+
+    @property
+    def titlebar(self):
+        return self._get_el(By.CSS_SELECTOR, "#link-list > div.content-title")
+
+    @property
+    def rows(self):
+        return self._get_els(By.CSS_SELECTOR,
+                            "#link-list > td.content-table-item")
+
+
+class FlowList(ElementBase):
+    @property
+    def body(self):
+        return self._get_el(By.ID, "flow-list")
+
+    @property
+    def close(self):
+        return self._get_el(By.XPATH, "//div[@id='flow-list']/div/div[2]")
+
+    @property
+    def titlebar(self):
+        return self._get_el(By.CSS_SELECTOR, "#flow-list > div.content-title")
+
+    @property
+    def rows(self):
+        return self._get_els(By.CSS_SELECTOR,
+                             "#flow-list > td.content-table-item")
