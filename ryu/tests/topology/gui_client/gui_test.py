@@ -138,11 +138,13 @@ class TestGUI(unittest.TestCase):
 
         # close
         target.close.click()
-        ok_(not target.body.is_displayed())
+        ok_(not target.body.is_displayed(),
+            '%s does not close content.' % target.name)
 
         # open
         opener.click()
-        ok_(self.util.wait_for_displayed(target.body))
+        ok_(self.util.wait_for_displayed(target.body),
+            '%s does not open content.' % target.name)
 
     def test_contents_close_open(self):
         menu = self.menu
@@ -167,8 +169,9 @@ class TestGUI(unittest.TestCase):
         mouse.drag_and_drop_by_offset(target, move, move)
         mouse.perform()
 
-        eq_(target.location['x'], xoffset)
-        eq_(target.location['y'], yoffset)
+        err = '%s draggable error' % (target.name)
+        eq_(target.location['x'], xoffset, err)
+        eq_(target.location['y'], yoffset, err)
 
         # move back
         # content can not drag if overlaps with other contents.
@@ -205,8 +208,9 @@ class TestGUI(unittest.TestCase):
         mouse.perform()
 
         # check
-        eq_(target.body.size['width'], size['width'] + resize)
-        eq_(target.body.size['height'], size['height'] + resize)
+        err = '%s resize error' % (target.name)
+        eq_(target.body.size['width'], size['width'] + resize, err)
+        eq_(target.body.size['height'], size['height'] + resize, err)
 
         # resize back
         mouse = self.mouse()

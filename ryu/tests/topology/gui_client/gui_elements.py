@@ -42,6 +42,7 @@ class ElementBase(object):
     def __init__(self, driver):
         self._driver = driver
         self.fail = AssertionError
+        self.name = self.__class__.__name__
 
     def _get_el(self, by, value):
         try:
