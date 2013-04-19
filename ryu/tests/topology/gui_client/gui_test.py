@@ -192,9 +192,44 @@ class TestGUI(unittest.TestCase):
         ## flow-list
         self._test_contents_draggable(self.flow_list.titlebar)
 
+    def _test_contents_resize(self, target):
+        self.util.wait_for_displayed(target.body)
+
+        size = target.body.size
+
+        # resize
+        resize = 20
+        mouse = self.mouse()
+        mouse.move_to_element(target.body)
+        mouse.drag_and_drop_by_offset(target.resize, resize, resize)
+        mouse.perform()
+
+        # check
+        eq_(target.body.size['width'], size['width'] + resize)
+        eq_(target.body.size['height'], size['height'] + resize)
+
+        # resize back
+        mouse = self.mouse()
+        mouse.move_to_element(target.body)
+        mouse.drag_and_drop_by_offset(target.resize, -resize, -resize)
+        mouse.perform()
+
     def test_contents_resize(self):
-        # TODO: contents resize
-        raise SkipTest("TODO: contents resize")
+        ## input-dialog
+        self._test_contents_resize(self.dialog)
+        self.dialog.cancel.click()
+
+        ## menu
+        self._test_contents_resize(self.menu)
+
+        ## topology
+        self._test_contents_resize(self.topology)
+
+        ## link-list
+        self._test_contents_resize(self.link_list)
+
+        ## flow-list
+        self._test_contents_resize(self.flow_list)
 
     def test_connected(self):
         # input host
