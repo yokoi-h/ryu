@@ -138,11 +138,13 @@ class TestGUI(unittest.TestCase):
 
         # close
         target.close.click()
-        ok_(not target.body.is_displayed())
+        ok_(not target.body.is_displayed(),
+            '%s does not close content.' % target.name)
 
         # open
         opener.click()
-        ok_(self.util.wait_for_displayed(target.body))
+        ok_(self.util.wait_for_displayed(target.body),
+            '%s does not open content.' % target.name)
 
     def test_contents_close_open(self):
         menu = self.menu
@@ -167,8 +169,9 @@ class TestGUI(unittest.TestCase):
         mouse.drag_and_drop_by_offset(target, move, move)
         mouse.perform()
 
-        eq_(target.location['x'], xoffset)
-        eq_(target.location['y'], yoffset)
+        err = '%s draggable error' % (target.name)
+        eq_(target.location['x'], xoffset, err)
+        eq_(target.location['y'], yoffset, err)
 
         # move back
         # content can not drag if overlaps with other contents.
@@ -192,9 +195,45 @@ class TestGUI(unittest.TestCase):
         ## flow-list
         self._test_contents_draggable(self.flow_list.titlebar)
 
+    def _test_contents_resize(self, target):
+        self.util.wait_for_displayed(target.body)
+
+        size = target.body.size
+
+        # resize
+        resize = 20
+        mouse = self.mouse()
+        mouse.move_to_element(target.body)
+        mouse.drag_and_drop_by_offset(target.resize, resize, resize)
+        mouse.perform()
+
+        # check
+        err = '%s resize error' % (target.name)
+        eq_(target.body.size['width'], size['width'] + resize, err)
+        eq_(target.body.size['height'], size['height'] + resize, err)
+
+        # resize back
+        mouse = self.mouse()
+        mouse.move_to_element(target.body)
+        mouse.drag_and_drop_by_offset(target.resize, -resize, -resize)
+        mouse.perform()
+
     def test_contents_resize(self):
-        # TODO: contents resize
-        raise SkipTest("TODO: contents resize")
+        ## input-dialog
+        self._test_contents_resize(self.dialog)
+        self.dialog.cancel.click()
+
+        ## menu
+        self._test_contents_resize(self.menu)
+
+        ## topology
+        self._test_contents_resize(self.topology)
+
+        ## link-list
+        self._test_contents_resize(self.link_list)
+
+        ## flow-list
+        self._test_contents_resize(self.flow_list)
 
     def test_connected(self):
         # input host

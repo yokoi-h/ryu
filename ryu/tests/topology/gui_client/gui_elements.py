@@ -42,6 +42,7 @@ class ElementBase(object):
     def __init__(self, driver):
         self._driver = driver
         self.fail = AssertionError
+        self.name = self.__class__.__name__
 
     def _get_el(self, by, value):
         try:
@@ -80,6 +81,10 @@ class Menu(ElementBase):
     def flow_list(self):
         return self._get_el(By.ID, "menu-flow-entries")
 
+    @property
+    def resize(self):
+        return self._get_el(By.XPATH, "//div[@id='menu']/div[6]")
+
 
 class Dialog(ElementBase):
     @property
@@ -106,6 +111,10 @@ class Dialog(ElementBase):
     def close(self):
         return self._get_el(By.CSS_SELECTOR, "span.ui-icon.ui-icon-closethick")
 
+    @property
+    def resize(self):
+        return self._get_el(By.XPATH, "//div[7]")
+
 
 class Topology(ElementBase):
     @property
@@ -115,6 +124,10 @@ class Topology(ElementBase):
     @property
     def titlebar(self):
         return self._get_el(By.CSS_SELECTOR, "#topology > div.content-title")
+
+    @property
+    def resize(self):
+        return self._get_el(By.XPATH, "//div[@id='topology']/div[5]")
 
     @property
     def switches(self):
@@ -144,6 +157,10 @@ class LinkList(ElementBase):
         return self._get_el(By.CSS_SELECTOR, "#link-list > div.content-title")
 
     @property
+    def resize(self):
+        return self._get_el(By.XPATH, "//div[@id='link-list']/div[6]")
+
+    @property
     def rows(self):
         return self._get_els(By.CSS_SELECTOR,
                             "#link-list > td.content-table-item")
@@ -161,6 +178,10 @@ class FlowList(ElementBase):
     @property
     def titlebar(self):
         return self._get_el(By.CSS_SELECTOR, "#flow-list > div.content-title")
+
+    @property
+    def resize(self):
+        return self._get_el(By.XPATH, "//div[@id='flow-list']/div[6]")
 
     @property
     def rows(self):
