@@ -38,16 +38,15 @@ class SimpleSwitch(app_manager.RyuApp):
 
         instruction = [parser.OFPInstructionActions(
                   ofproto_v1_3.OFPIT_APPLY_ACTIONS, actions)]
-
+        priority = 1
         flow_mod_message = self.create_flow_mod_message(
-                    datapath, match, instruction)
+                    datapath, match, priority, instruction)
         datapath.send_msg(flow_mod_message)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
         msg = ev.msg
         datapath = msg.datapath
-        ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         dpid = datapath.id
         self.mac_to_port.setdefault(dpid, {})
@@ -70,14 +69,14 @@ class SimpleSwitch(app_manager.RyuApp):
         if dst in self.mac_to_port[dpid]:
             out_port = self.mac_to_port[dpid][dst]
         else:
-            out_port = ofproto.OFPP_ALL
-            self.logger.info("OFPP_FLOOD")
+            out_port = ofproto_v1_3.OFPP_ALL
+            self.logger.info("FLOOD")
 
         actions = [
-            parser.OFPActionOutput(out_port, ofproto.OFPCML_NO_BUFFER)]
+            parser.OFPActionOutput(out_port, ofproto_v1_3.OFPCML_NO_BUFFER)]
 
         # install a flow to avoid packet_in next time
-        if out_port is not ofproto.OFPP_ALL:
+        if out_port is not ofproto_v1_3.OFPP_ALL:
             self.add_flow(datapath, in_port, dst, actions)
 
         packet_out = parser.OFPPacketOut(
@@ -93,28 +92,25 @@ class SimpleSwitch(app_manager.RyuApp):
     def _switch_features_handler(self, ev):
         datapath = ev.msg.datapath
         parser = datapath.ofproto_parser
-        ofproto = datapath.ofproto
         match = parser.OFPMatch()
 
-        out_port = parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
-                                          ofproto.OFPCML_NO_BUFFER)
+        out_port = parser.OFPActionOutput(ofproto_v1_3.OFPP_CONTROLLER,
+                                          ofproto_v1_3.OFPCML_NO_BUFFER)
         write_action = parser.OFPInstructionActions(
-                                    ofproto.OFPIT_WRITE_ACTIONS, [out_port])
+                            ofproto_v1_3.OFPIT_APPLY_ACTIONS, [out_port])
         instruction = [write_action]
-
         datapath.send_msg(self.create_flow_mod_message(datapath,
-                        match, instruction))
+                        match, 0, instruction))
 
-    def create_flow_mod_message(self, datapath, match, instruction):
-        ofproto = datapath.ofproto
+    def create_flow_mod_message(self, datapath, match, priority, instruction):
         parser = datapath.ofproto_parser
         flow_mod_message = parser.OFPFlowMod(
             datapath=datapath,
             cookie=0, cookie_mask=0, table_id=0,
-            command=ofproto.OFPFC_ADD,
-            idle_timeout=0, hard_timeout=0, priority=0,
+            command=ofproto_v1_3.OFPFC_ADD,
+            idle_timeout=0, hard_timeout=0, priority=priority,
             buffer_id=0xffffffff,  # OFP_NO_BUFFER=0xffffffff
-            out_port=ofproto.OFPP_ANY,
+            out_port=ofproto_v1_3.OFPP_ANY,
             out_group=OFPG_ANY,
             flags=0,
             match=match,
