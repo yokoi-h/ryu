@@ -18,28 +18,23 @@
 
 import code
 import os
-import select
 import sys
 import signal
+import eventlet.patcher
+threading = eventlet.patcher.original('threading')
 
 from ryu.base import app_manager
-from ryu.lib import hub
-
-
-# builtin raw_input() is written by C and doesn't yeild execution.
-def _raw_input(message):
-    sys.stdout.write(message)
-    select.select([sys.stdin.fileno()], [], [])
-    return sys.stdin.readline()
 
 
 class DebugConsole(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(DebugConsole, self).__init__(*args, **kwargs)
-        hub.spawn(self.__thread)
+        t = threading.Thread(target=self.__thread)
+        t.setDaemon(True)
+        t.start()
 
     def __thread(self):
-        code.interact(banner="Ryu Debug Console", readfunc=_raw_input)
+        code.InteractiveConsole().interact("Ryu Debug Console")
 
         # XXX should be a graceful shutdown
         os.kill(os.getpid(), signal.SIGTERM)
