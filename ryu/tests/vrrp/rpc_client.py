@@ -5,6 +5,7 @@
 # ip link add veth0 type veth peer name veth0-dump
 # ip link set veth0 up
 # ip link set veth0-dump up
+# ip addr add 172.16.10.11
 
 sudo PYTHONPATH=. ./bin/ryu-manager \
              ./ryu/services/vrrp/manager.py \
@@ -12,12 +13,12 @@ sudo PYTHONPATH=. ./bin/ryu-manager \
 
 ex. sudo PYTHONPATH=. ./bin/ryu-manager \
                ./ryu/services/vrrp/manager.py \
-               ./ryu/services/vrrp/rpc_manager.py --vrrp-rpc-port 51720
+               ./ryu/services/vrrp/rpc_manager.py --vrrp-rpc-port 51820
 
 
 2. client side
 
-PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py --host <server-host> --port <server-port> \
+PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py --host <server-host> --port <server-port> --vripaddr <virtual_ip_addr>\
                     --method <method> --vrid <vrid> --priority <priority> --ifname <ifname> --ifipaddr <ipaddr>
 
   method: config
@@ -25,9 +26,8 @@ PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py --host <server-host> --port <
           list
 
 ex.
-  PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py 127.0.0.1 51720 config
-  PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py --host 172.16.10.1 --port 51820 --method config \
-                    --vrid 10 --priority 255 --ifname veth1 --ifipaddr 172.16.10.1
+  PYTHONPATH=. python ./ryu/tests/vrrp/rpc_client.py --host 127.0.0.1 --port 51820 --method config \
+                    --vripaddr 172.16.10.10 --vrid 10 --priority 255 --ifname veth1 --ifipaddr 172.16.10.11
 
 
   Client wait notification from the server if you specify config method.
@@ -73,9 +73,9 @@ def vrrp_config_change(client, args):
 def vrrp_list(client, args):
     vrid = args.vrid
     result = client.call("vrrp_list", [vrid])
-    info = result[0]
-    for key in info:
-        print key, " : ", info[key]
+    for info in result:
+        for key in info:
+            print key, " : ", info[key]
 
 
 def receive_notification_loop(client):
