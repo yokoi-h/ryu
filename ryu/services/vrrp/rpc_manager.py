@@ -157,7 +157,8 @@ class RpcVRRPManager(app_manager.RyuApp):
                 "version": instance.config.version,
                 "advertisement_interval": instance.config.advertisement_interval,
                 "priority": instance.config.priority,
-                "virtual_ip_address": str(netaddr.IPAddress(instance.config.ip_addresses[0]))
+                "virtual_ip_address": str(netaddr.IPAddress(instance.config.ip_addresses[0])),
+                "state": instance.state
             }
             ret_list.append(info_dict)
         endpoint.send_response(msgid, error=None, result=ret_list)
