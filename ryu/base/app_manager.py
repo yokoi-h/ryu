@@ -141,7 +141,7 @@ class RyuApp(object):
         if name in SERVICE_BRICKS:
             if isinstance(ev, EventRequestBase):
                 ev.src = self.name
-            LOG.debug("EVENT %s->%s %s" %
+            LOG.info("EVENT %s->%s %s" %
                       (self.name, name, ev.__class__.__name__))
             SERVICE_BRICKS[name]._send_event(ev)
         else:
