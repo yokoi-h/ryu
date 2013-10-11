@@ -22,7 +22,6 @@ VRRPManager creates/deletes VRRPRounter instances dynamically.
 
 import abc
 import logging
-from oslo.config import cfg
 
 from ryu.base import app_manager
 from ryu.controller import event
@@ -32,11 +31,6 @@ from ryu.lib.packet import vrrp
 from ryu.services.vrrp import event as vrrp_event
 from ryu.services.vrrp import api as vrrp_api
 
-CONF = cfg.CONF
-CONF.register_cli_opts([
-    cfg.StrOpt('stats-file', default='/tmp/vrrp-stats.log',
-    help='name of the file that statistics is written to')
-])
 
 # TODO: improve Timer service and move it into framework
 class Timer(object):

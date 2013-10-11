@@ -29,7 +29,10 @@ CONF = cfg.CONF
 CONF.register_cli_opts([
     cfg.IntOpt('vrrp-rpc-port', default=VRRP_RPC_PORT,
                help='port for vrrp rpc interface')])
-
+CONF.register_cli_opts([
+    cfg.StrOpt('stats-file', default='/tmp/vrrp-stats.log',
+    help='name of the file that statistics is written to')
+])
 
 class VRRPParam(object):
     def __init__(self, version, vrid, ip_address):
