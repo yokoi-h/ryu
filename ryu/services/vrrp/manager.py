@@ -35,6 +35,33 @@ from ryu.services.vrrp import router as vrrp_router
 from ryu.services.vrrp.router import TimerEventSender
 
 
+class VRRPStatistics(object):
+    def __init__(self, resource_id, resource_name):
+        self.resource_id = resource_id
+        self.resource_name = resource_name
+        self.tx_vrrp_packets = 0
+        self.rx_vrrp_packets = 0
+        self.rx_vrrp_zero_prio_packets = 0
+        self.tx_vrrp_zero_prio_packets = 0
+        self.rx_vrrp_invalid_packets = 0
+        self.rx_vrrp_bad_auth = 0
+        self.idle_to_master_transitions = 0
+        self.idle_to_backup_transitions = 0
+        self.backup_to_master_transitions = 0
+        self.master_to_backup_transitions = 0
+
+    def get_json(self):
+        out_str = 'resource_id' + ":" + self.resource_id
+        out_str = out_str + 'resource_name' + ":" + self.resource_name
+        out_str = out_str + 'tx_vrrp_packets' + ":" + self.tx_vrrp_packets
+        out_str = out_str + 'rx_vrrp_packets' + ":" + self.rx_vrrp_packets
+
+        return out_str
+
+    class EventStatisticsOut(event.EventBase):
+        pass
+
+
 class VRRPInstance(object):
     def __init__(self, name, monitor_name, config, interface,
                  vrrp_router_, interface_monitor, statistics):
@@ -173,29 +200,4 @@ class VRRPManager(app_manager.RyuApp):
         self.reply_to_request(ev, vrrp_list)
 
 
-class VRRPStatistics(object):
-    def __init__(self, resource_id, resource_name):
-        self.resource_id = resource_id
-        self.resource_name = resource_name
-        self.tx_vrrp_packets = 0
-        self.rx_vrrp_packets = 0
-        self.rx_vrrp_zero_prio_packets = 0
-        self.tx_vrrp_zero_prio_packets = 0
-        self.rx_vrrp_invalid_packets = 0
-        self.rx_vrrp_bad_auth = 0
-        self.idle_to_master_transitions = 0
-        self.idle_to_backup_transitions = 0
-        self.backup_to_master_transitions = 0
-        self.master_to_backup_transitions = 0
-
-    def get_json(self):
-        out_str = 'resource_id' + ":" + self.resource_id
-        out_str = out_str + 'resource_name' + ":" + self.resource_name
-        out_str = out_str + 'tx_vrrp_packets' + ":" + self.tx_vrrp_packets
-        out_str = out_str + 'rx_vrrp_packets' + ":" + self.rx_vrrp_packets
-
-        return out_str
-
-    class EventStatisticsOut(event.EventBase):
-        pass
 
