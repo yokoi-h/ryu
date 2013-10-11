@@ -36,10 +36,11 @@ from ryu.services.vrrp.router import TimerEventSender
 
 
 class VRRPStatistics(object):
-    def __init__(self, name, resource_id, resource_name):
+    def __init__(self, name, resource_id, resource_name, statistics_interval):
         self.name = name
         self.resource_id = resource_id
         self.resource_name = resource_name
+        self.statistics_interval = statistics_interval
         self.tx_vrrp_packets = 0
         self.rx_vrrp_packets = 0
         self.rx_vrrp_zero_prio_packets = 0
@@ -59,14 +60,9 @@ class VRRPStatistics(object):
 
         return out_str
 
-    class EventStatisticsOut(event.EventBase):
-        def __init__(self, instance_name=None):
-            super(VRRPStatistics.EventStatisticsOut, self).__init__()
-            self.instance_name = instance_name
-
 class VRRPInstance(object):
     def __init__(self, name, monitor_name, config, interface,
-                 vrrp_router_, interface_monitor, statistics):
+                 vrrp_router_, interface_monitor):
         super(VRRPInstance, self).__init__()
         self.name = name                        # vrrp_router.name
         self.monitor_name = monitor_name        # interface_monitor.name
@@ -74,7 +70,6 @@ class VRRPInstance(object):
         self.interface = interface
         self.vrrp_router = vrrp_router_
         self.interface_monitor = interface_monitor
-        self.statistics = statistics
 
 
 class VRRPManager(app_manager.RyuApp):
@@ -105,7 +100,8 @@ class VRRPManager(app_manager.RyuApp):
             self.reply_to_request(ev, rep)
             return
 
-        statistics = VRRPStatistics(name, config.resource_id, config.resource_name)
+        statistics = VRRPStatistics(name, config.resource_id,
+                                    config.resource_name, config.statistics_interval)
 
         monitor = vrrp_monitor.VRRPInterfaceMonitor.factory(
             interface, config, name, statistics, *self._args, **self._kwargs)
@@ -127,16 +123,13 @@ class VRRPManager(app_manager.RyuApp):
         monitor.register_observer(vrrp_event.EventVRRPReceived, router.name)
 
         instance = VRRPInstance(name, monitor.name,
-                                config, interface, router, monitor, statistics)
-        stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
-        self.register_observer(VRRPStatistics.EventStatisticsOut, statistics.name)
+                                config, interface, router, monitor)
 
         self._instances[name] = instance
         #self.logger.debug('report_bricks')
         #app_manager.AppManager.get_instance().report_bricks()   # debug
         monitor.start()
         router.start()
-        stats_out_timer.start(config.statistics_interval)
         self.logger.info("stats interval : ")
         self.logger.info(config.statistics_interval)
         self.logger.info("stats timer started")

@@ -170,6 +170,9 @@ class VRRPRouter(app_manager.RyuApp):
     class _EventPreemptDelay(event.EventBase):
         pass
 
+    class _EventStatisticsOut(event.EventBase):
+        pass
+
     def __init__(self, *args, **kwargs):
         super(VRRPRouter, self).__init__(*args, **kwargs)
         self.name = kwargs['name']
@@ -186,8 +189,11 @@ class VRRPRouter(app_manager.RyuApp):
         self.adver_timer = TimerEventSender(self, self._EventAdver)
         self.preempt_delay_timer = TimerEventSender(self,
                                                     self._EventPreemptDelay)
+        self.stats_out_timer = TimerEventSender(self, self._EventStatisticsOut)
+
         self.register_observer(self._EventMasterDown, self.name)
         self.register_observer(self._EventAdver, self.name)
+        self.register_observer(self._EventStatisticsOut, self.name)
 
     def send_advertisement(self, release=False):
         if self.vrrp is None:
@@ -259,6 +265,11 @@ class VRRPRouter(app_manager.RyuApp):
         self.vrrp = None
 
         self.state_impl.vrrp_config_change_request(ev)
+
+    @handler.set_ev_handler(_EventStatisticsOut)
+    def statistics_handler(self, ev):
+        print self.statistics.get_json()
+        self.stats_out_timer.start(self.statistics.statistics_interval)
 
 
 # RFC defines that start timer, then change the state.
@@ -686,4 +697,5 @@ class VRRPRouterV3(VRRPRouter):
             self.state_change(vrrp_event.VRRP_STATE_BACKUP)
             self.master_down_timer.start(params.master_down_interval)
 
+        self.stats_out_timer.start(self.statistics.statistics_interval)
         super(VRRPRouterV3, self).start()
