@@ -27,15 +27,17 @@ PYTHONPATH=. ./bin/ryu-manager --verbose \
 
 from ryu.base import app_manager
 from ryu.controller import handler
+from ryu.controller import event
 from ryu.lib import hub
 from ryu.services.vrrp import event as vrrp_event
 from ryu.services.vrrp import monitor as vrrp_monitor
 from ryu.services.vrrp import router as vrrp_router
+from ryu.services.vrrp.router import TimerEventSender
 
 
 class VRRPInstance(object):
     def __init__(self, name, monitor_name, config, interface,
-                 vrrp_router_, interface_monitor):
+                 vrrp_router_, interface_monitor, statistics):
         super(VRRPInstance, self).__init__()
         self.name = name                        # vrrp_router.name
         self.monitor_name = monitor_name        # interface_monitor.name
@@ -43,6 +45,16 @@ class VRRPInstance(object):
         self.interface = interface
         self.vrrp_router = vrrp_router_
         self.interface_monitor = interface_monitor
+        self.statistics = statistics
+        self.stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
+
+    @handler.set_ev_handler(VRRPStatistics.EventStatisticsOut)
+    def statistics_handler(self, ev):
+        print self.statistics.get_json()
+
+    def statistics_timer_start(self, interval):
+        if self.statistics:
+            self.stats_out_timer.start(interval)
 
 
 class VRRPManager(app_manager.RyuApp):
@@ -73,10 +85,12 @@ class VRRPManager(app_manager.RyuApp):
             self.reply_to_request(ev, rep)
             return
 
+        statistics = VRRPStatistics(config.resource_id, config.resource_name)
+
         monitor = vrrp_monitor.VRRPInterfaceMonitor.factory(
-            interface, config, name, *self._args, **self._kwargs)
+            interface, config, name, statistics, *self._args, **self._kwargs)
         router = vrrp_router.VRRPRouter.factory(
-            name, monitor.name, interface, config, *self._args, **self._kwargs)
+            name, monitor.name, interface, config, statistics, *self._args, **self._kwargs)
 
         # Event piping
         #  vrrp_router -> vrrp_manager
@@ -93,12 +107,15 @@ class VRRPManager(app_manager.RyuApp):
         monitor.register_observer(vrrp_event.EventVRRPReceived, router.name)
 
         instance = VRRPInstance(name, monitor.name,
-                                config, interface, router, monitor)
+                                config, interface, router, monitor, statistics)
+        self.register_observer(VRRPStatistics.EventStatisticsOut)
+
         self._instances[name] = instance
         #self.logger.debug('report_bricks')
         #app_manager.AppManager.get_instance().report_bricks()   # debug
         monitor.start()
         router.start()
+        instance.statistics_timer_start(config.statistics_interval)
 
         rep = vrrp_event.EventVRRPConfigReply(router.name, interface, config)
         self.reply_to_request(ev, rep)
@@ -154,3 +171,31 @@ class VRRPManager(app_manager.RyuApp):
 
         vrrp_list = vrrp_event.EventVRRPListReply(instance_list)
         self.reply_to_request(ev, vrrp_list)
+
+
+class VRRPStatistics(object):
+    def __init__(self, resource_id, resource_name):
+        self.resource_id = resource_id
+        self.resource_name = resource_name
+        self.tx_vrrp_packets = 0
+        self.rx_vrrp_packets = 0
+        self.rx_vrrp_zero_prio_packets = 0
+        self.tx_vrrp_zero_prio_packets = 0
+        self.rx_vrrp_invalid_packets = 0
+        self.rx_vrrp_bad_auth = 0
+        self.idle_to_master_transitions = 0
+        self.idle_to_backup_transitions = 0
+        self.backup_to_master_transitions = 0
+        self.master_to_backup_transitions = 0
+
+    def get_json(self):
+        out_str = 'resource_id' + ":" + self.resource_id
+        out_str = out_str + 'resource_name' + ":" + self.resource_name
+        out_str = out_str + 'tx_vrrp_packets' + ":" + self.tx_vrrp_packets
+        out_str = out_str + 'rx_vrrp_packets' + ":" + self.rx_vrrp_packets
+
+        return out_str
+
+    class EventStatisticsOut(event.EventBase):
+        pass
+

@@ -101,7 +101,7 @@ class VRRPInterfaceMonitor(app_manager.RyuApp):
         return _register
 
     @staticmethod
-    def factory(interface, config, router_name, *args, **kwargs):
+    def factory(interface, config, router_name, statistics, *args, **kwargs):
         cls = VRRPInterfaceMonitor._CONSTRUCTORS[interface.__class__]
         app_mgr = app_manager.AppManager.get_instance()
 
@@ -109,6 +109,7 @@ class VRRPInterfaceMonitor(app_manager.RyuApp):
         kwargs['router_name'] = router_name
         kwargs['vrrp_config'] = config
         kwargs['vrrp_interface'] = interface
+        kwargs['vrrp_statistics'] = statistics
         app = app_mgr.instantiate(cls, *args, **kwargs)
         return app
 
@@ -121,6 +122,7 @@ class VRRPInterfaceMonitor(app_manager.RyuApp):
         self.config = kwargs['vrrp_config']
         self.interface = kwargs['vrrp_interface']
         self.router_name = kwargs['router_name']
+        self.statistics = kwargs['vrrp_statistics']
         self.name = self.instance_name(self.interface, self.config.vrid)
 
     def _send_vrrp_packet_received(self, packet_data):
@@ -175,6 +177,11 @@ class VRRPInterfaceMonitor(app_manager.RyuApp):
 
         # TODO: Optional check rfc5798 7.1
         # may_vrrp.ip_addresses equals to self.config.ip_addresses
+
+        # for statistics
+        if self.statistics:
+            #self.statistics.rx_vrrp_packets += packet_.len()
+            pass
 
         vrrp_received = vrrp_event.EventVRRPReceived(self.interface, packet_)
         self.send_event(self.router_name, vrrp_received)
@@ -341,6 +348,8 @@ class VRRPInterfaceMonitorNetworkDevice(VRRPInterfaceMonitor):
                     break
 
                 self.logger.debug('recv buf')
+                if self.statistics:
+                    self.statistics.rx_vrrp_packets += buf.len()
                 self._send_vrrp_packet_received(buf)
         finally:
             self._join_vrrp_group(False)
@@ -349,6 +358,8 @@ class VRRPInterfaceMonitorNetworkDevice(VRRPInterfaceMonitor):
     @handler.set_ev_handler(vrrp_event.EventVRRPTransmitRequest)
     def vrrp_transmit_request_handler(self, ev):
         self.logger.debug('send')
+        if self.statistics:
+            self.statistics.tx_vrrp_packets += ev.data.len()
         self.packet_socket.sendto(ev.data, (self.interface.device_name, 0))
 
     def _initialize(self):

@@ -148,7 +148,7 @@ class VRRPRouter(app_manager.RyuApp):
         return _register
 
     @staticmethod
-    def factory(name, monitor_name, interface, config, *args, **kwargs):
+    def factory(name, monitor_name, interface, config, statistics, *args, **kwargs):
         cls = VRRPRouter._CONSTRUCTORS[config.version]
         app_mgr = app_manager.AppManager.get_instance()
         kwargs = kwargs.copy()
@@ -156,6 +156,7 @@ class VRRPRouter(app_manager.RyuApp):
         kwargs['monitor_name'] = monitor_name
         kwargs['vrrp_interface'] = interface
         kwargs['vrrp_config'] = config
+        kwargs['vrrp_statistics'] = statistics
         return app_mgr.instantiate(cls, *args, **kwargs)
 
     class _EventMasterDown(event.EventBase):
@@ -173,6 +174,7 @@ class VRRPRouter(app_manager.RyuApp):
         self.monitor_name = kwargs['monitor_name']
         self.interface = kwargs['vrrp_interface']
         self.config = kwargs['vrrp_config']
+        self.statistics = kwargs['vrrp_statistics']
         self.params = VRRPParams(self.config)
         self.state = None
         self.state_impl = None
