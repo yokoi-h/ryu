@@ -60,8 +60,9 @@ class VRRPStatistics(object):
         return out_str
 
     class EventStatisticsOut(event.EventBase):
-        pass
-
+        def __init__(self, instance_name):
+            super(VRRPStatistics.EventStatisticsOut, self).__init__()
+            self.instance_name = instance_name
 
 class VRRPInstance(object):
     def __init__(self, name, monitor_name, config, interface,
