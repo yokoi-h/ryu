@@ -114,7 +114,7 @@ class RpcVRRPManager(app_manager.RyuApp):
             preempt_delay=port[CONF_KEY_PORT_PREEMPT_DELAY],
             statistics_interval=2,#port[CONF_KEY_STATISTICS_INTERVAL],
             resource_id="vrrp_resource_id",#contexts['resource_id'],
-            resource_name="vrrp_resource_name" #contexts['resource_name']
+            resource_name="vrrp_resource_name",#contexts['resource_name']
             )
         config_result = vrrp_api.vrrp_config(self, interface, config)
 
