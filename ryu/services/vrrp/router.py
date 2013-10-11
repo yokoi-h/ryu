@@ -77,6 +77,8 @@ class TimerEventSender(Timer):
         self._ev_cls = ev_cls
 
     def _timeout(self):
+        print "app.name : ",self._app.name
+        print "event : ",self._ev_cls
         self._app.send_event(self._app.name, self._ev_cls())
 
 

@@ -140,7 +140,7 @@ class VRRPManager(app_manager.RyuApp):
         monitor.start()
         router.start()
         stats_out_timer.start(config.statistics_interval)
-
+        self.logger.info("stats timer started")
         rep = vrrp_event.EventVRRPConfigReply(router.name, interface, config)
         self.reply_to_request(ev, rep)
 
