@@ -199,8 +199,8 @@ class VRRPRouter(app_manager.RyuApp):
             self.stats_out_timer = TimerEventSender(self, self._EventStatisticsOut)
             self.register_observer(self._EventStatisticsOut, self.name)
             self.stats_log = logging.getLogger('stats')
-            print "CONF.stats-file : ",CONF.stats-file
-            self.stats_log.addHandler(logging.FileHandler(CONF.stats-file))
+            print "CONF.stats-file : ",CONF.stats_file
+            self.stats_log.addHandler(logging.FileHandler(CONF.stats_file))
 
     def send_advertisement(self, release=False):
         if self.vrrp is None:
