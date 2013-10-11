@@ -131,7 +131,7 @@ class VRRPManager(app_manager.RyuApp):
 
         instance = VRRPInstance(name, monitor.name,
                                 config, interface, router, monitor, statistics)
-        self.stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
+        stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
         self.register_observer(VRRPStatistics.EventStatisticsOut, statistics.name)
 
         self._instances[name] = instance
@@ -139,7 +139,7 @@ class VRRPManager(app_manager.RyuApp):
         #app_manager.AppManager.get_instance().report_bricks()   # debug
         monitor.start()
         router.start()
-        self.stats_out_timer.start(config.statistics_interval)
+        stats_out_timer.start(config.statistics_interval)
 
         rep = vrrp_event.EventVRRPConfigReply(router.name, interface, config)
         self.reply_to_request(ev, rep)
