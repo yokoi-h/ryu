@@ -74,15 +74,10 @@ class VRRPInstance(object):
         self.vrrp_router = vrrp_router_
         self.interface_monitor = interface_monitor
         self.statistics = statistics
-        self.stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
 
     @handler.set_ev_handler(VRRPStatistics.EventStatisticsOut)
     def statistics_handler(self, ev):
         print self.statistics.get_json()
-
-    def statistics_timer_start(self, interval):
-        if self.statistics:
-            self.stats_out_timer.start(interval)
 
 
 class VRRPManager(app_manager.RyuApp):
@@ -136,6 +131,7 @@ class VRRPManager(app_manager.RyuApp):
 
         instance = VRRPInstance(name, monitor.name,
                                 config, interface, router, monitor, statistics)
+        self.stats_out_timer = TimerEventSender(self, VRRPStatistics.EventStatisticsOut)
         self.register_observer(VRRPStatistics.EventStatisticsOut, statistics.name)
 
         self._instances[name] = instance
@@ -143,7 +139,7 @@ class VRRPManager(app_manager.RyuApp):
         #app_manager.AppManager.get_instance().report_bricks()   # debug
         monitor.start()
         router.start()
-        instance.statistics_timer_start(config.statistics_interval)
+        self.stats_out_timer.start(config.statistics_interval)
 
         rep = vrrp_event.EventVRRPConfigReply(router.name, interface, config)
         self.reply_to_request(ev, rep)
