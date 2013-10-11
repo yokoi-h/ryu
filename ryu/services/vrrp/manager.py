@@ -75,10 +75,6 @@ class VRRPInstance(object):
         self.interface_monitor = interface_monitor
         self.statistics = statistics
 
-    @handler.set_ev_handler(VRRPStatistics.EventStatisticsOut)
-    def statistics_handler(self, ev):
-        print self.statistics.get_json()
-
 
 class VRRPManager(app_manager.RyuApp):
     @staticmethod
@@ -195,6 +191,15 @@ class VRRPManager(app_manager.RyuApp):
 
         vrrp_list = vrrp_event.EventVRRPListReply(instance_list)
         self.reply_to_request(ev, vrrp_list)
+
+    @handler.set_ev_handler(VRRPStatistics.EventStatisticsOut)
+    def statistics_handler(self, ev):
+        instance_name = ev.instance_name
+        instance = self._instances.get(instance_name, None)
+        if instance:
+            stats = instance.statistics
+            print stats.get_json()
+
 
 
 
