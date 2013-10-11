@@ -36,7 +36,8 @@ from ryu.services.vrrp.router import TimerEventSender
 
 
 class VRRPStatistics(object):
-    def __init__(self, resource_id, resource_name):
+    def __init__(self, name, resource_id, resource_name):
+        self.name = name
         self.resource_id = resource_id
         self.resource_name = resource_name
         self.tx_vrrp_packets = 0
@@ -112,7 +113,7 @@ class VRRPManager(app_manager.RyuApp):
             self.reply_to_request(ev, rep)
             return
 
-        statistics = VRRPStatistics(config.resource_id, config.resource_name)
+        statistics = VRRPStatistics(name, config.resource_id, config.resource_name)
 
         monitor = vrrp_monitor.VRRPInterfaceMonitor.factory(
             interface, config, name, statistics, *self._args, **self._kwargs)
@@ -135,7 +136,7 @@ class VRRPManager(app_manager.RyuApp):
 
         instance = VRRPInstance(name, monitor.name,
                                 config, interface, router, monitor, statistics)
-        self.register_observer(VRRPStatistics.EventStatisticsOut)
+        self.register_observer(VRRPStatistics.EventStatisticsOut, statistics.name)
 
         self._instances[name] = instance
         #self.logger.debug('report_bricks')
