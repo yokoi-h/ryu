@@ -55,8 +55,8 @@ class VRRPStatistics(object):
     def get_json(self):
         out_str = 'resource_id' + ":" + self.resource_id
         out_str = out_str + 'resource_name' + ":" + self.resource_name
-        out_str = out_str + 'tx_vrrp_packets' + ":" + self.tx_vrrp_packets
-        out_str = out_str + 'rx_vrrp_packets' + ":" + self.rx_vrrp_packets
+        out_str = out_str + 'tx_vrrp_packets' + ":" + str(self.tx_vrrp_packets)
+        out_str = out_str + 'rx_vrrp_packets' + ":" + str(self.rx_vrrp_packets)
 
         return out_str
 
