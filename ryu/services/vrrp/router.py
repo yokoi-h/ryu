@@ -275,7 +275,6 @@ class VRRPRouter(app_manager.RyuApp):
 
     @handler.set_ev_handler(_EventStatisticsOut)
     def statistics_handler(self, ev):
-        print self.statistics.get_stats()
         self.stats_log.info(self.statistics.get_stats())
         self.stats_out_timer.start(self.statistics.statistics_interval)
 
