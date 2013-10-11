@@ -21,6 +21,8 @@ VRRPManager creates/deletes VRRPRounter instances dynamically.
 """
 
 import abc
+import logging
+from oslo.config import cfg
 
 from ryu.base import app_manager
 from ryu.controller import event
@@ -30,6 +32,11 @@ from ryu.lib.packet import vrrp
 from ryu.services.vrrp import event as vrrp_event
 from ryu.services.vrrp import api as vrrp_api
 
+CONF = cfg.CONF
+CONF.register_cli_opts([
+    cfg.StrOpt('stats-file', default='/tmp/vrrp-stats.log',
+    help='name of the file that statistics is written to')
+])
 
 # TODO: improve Timer service and move it into framework
 class Timer(object):
@@ -189,11 +196,16 @@ class VRRPRouter(app_manager.RyuApp):
         self.adver_timer = TimerEventSender(self, self._EventAdver)
         self.preempt_delay_timer = TimerEventSender(self,
                                                     self._EventPreemptDelay)
-        self.stats_out_timer = TimerEventSender(self, self._EventStatisticsOut)
 
         self.register_observer(self._EventMasterDown, self.name)
         self.register_observer(self._EventAdver, self.name)
-        self.register_observer(self._EventStatisticsOut, self.name)
+
+        if self.statistics:
+            self.stats_out_timer = TimerEventSender(self, self._EventStatisticsOut)
+            self.register_observer(self._EventStatisticsOut, self.name)
+            self.stats_log = logging.getLogger('stats')
+            print "CONF.stats-file : ",CONF.stats-file
+            self.stats_log.addHandler(logging.FileHandler(CONF.stats-file))
 
     def send_advertisement(self, release=False):
         if self.vrrp is None:
@@ -269,6 +281,7 @@ class VRRPRouter(app_manager.RyuApp):
     @handler.set_ev_handler(_EventStatisticsOut)
     def statistics_handler(self, ev):
         print self.statistics.get_stats()
+        self.stats_log.info(self.statistics.get_stats())
         self.stats_out_timer.start(self.statistics.statistics_interval)
 
 

@@ -58,7 +58,6 @@ class VRRPStatistics(object):
             timestamp=ts,
             resource_id=self.resource_id,
             resource_name=self.resource_name,
-            statistics_interval=self.statistics_interval,
             tx_vrrp_packets=self.tx_vrrp_packets,
             rx_vrrp_packets=self.rx_vrrp_packets,
             rx_vrrp_zero_prio_packets=self.rx_vrrp_zero_prio_packets,
@@ -72,13 +71,6 @@ class VRRPStatistics(object):
         )
         return stats_dict
 
-    def get_json(self):
-        out_str = 'resource_id' + ":" + self.resource_id
-        out_str = out_str + 'resource_name' + ":" + self.resource_name
-        out_str = out_str + 'tx_vrrp_packets' + ":" + str(self.tx_vrrp_packets)
-        out_str = out_str + 'rx_vrrp_packets' + ":" + str(self.rx_vrrp_packets)
-
-        return out_str
 
 class VRRPInstance(object):
     def __init__(self, name, monitor_name, config, interface,
@@ -150,9 +142,6 @@ class VRRPManager(app_manager.RyuApp):
         #app_manager.AppManager.get_instance().report_bricks()   # debug
         monitor.start()
         router.start()
-        self.logger.info("stats interval : ")
-        self.logger.info(config.statistics_interval)
-        self.logger.info("stats timer started")
         rep = vrrp_event.EventVRRPConfigReply(router.name, interface, config)
         self.reply_to_request(ev, rep)
 
