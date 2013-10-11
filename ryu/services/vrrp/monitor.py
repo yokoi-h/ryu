@@ -349,7 +349,7 @@ class VRRPInterfaceMonitorNetworkDevice(VRRPInterfaceMonitor):
 
                 self.logger.debug('recv buf')
                 if self.statistics:
-                    self.statistics.rx_vrrp_packets += buf.len()
+                    self.statistics.rx_vrrp_packets += len(buf)
                 self._send_vrrp_packet_received(buf)
         finally:
             self._join_vrrp_group(False)
@@ -359,7 +359,7 @@ class VRRPInterfaceMonitorNetworkDevice(VRRPInterfaceMonitor):
     def vrrp_transmit_request_handler(self, ev):
         self.logger.debug('send')
         if self.statistics:
-            self.statistics.tx_vrrp_packets += ev.data.len()
+            self.statistics.tx_vrrp_packets += len(ev.data)
         self.packet_socket.sendto(ev.data, (self.interface.device_name, 0))
 
     def _initialize(self):
