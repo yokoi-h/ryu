@@ -27,12 +27,10 @@ PYTHONPATH=. ./bin/ryu-manager --verbose \
 
 from ryu.base import app_manager
 from ryu.controller import handler
-from ryu.controller import event
 from ryu.lib import hub
 from ryu.services.vrrp import event as vrrp_event
 from ryu.services.vrrp import monitor as vrrp_monitor
 from ryu.services.vrrp import router as vrrp_router
-from ryu.services.vrrp.router import TimerEventSender
 
 
 class VRRPStatistics(object):
