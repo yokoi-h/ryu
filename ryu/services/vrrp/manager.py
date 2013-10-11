@@ -60,7 +60,7 @@ class VRRPStatistics(object):
         return out_str
 
     class EventStatisticsOut(event.EventBase):
-        def __init__(self, instance_name):
+        def __init__(self, instance_name=None):
             super(VRRPStatistics.EventStatisticsOut, self).__init__()
             self.instance_name = instance_name
 
@@ -197,7 +197,9 @@ class VRRPManager(app_manager.RyuApp):
     @handler.set_ev_handler(VRRPStatistics.EventStatisticsOut)
     def statistics_handler(self, ev):
         instance_name = ev.instance_name
+        print "instance name : ",instance_name
         instance = self._instances.get(instance_name, None)
+
         if instance:
             stats = instance.statistics
             print stats.get_json()
