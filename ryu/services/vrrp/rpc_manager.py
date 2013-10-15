@@ -40,11 +40,12 @@ CONF.register_cli_opts([
 
 
 class VRRPParam(object):
-    def __init__(self, version, vrid, ip_address, admin_state=None):
+    def __init__(self, version, vrid, ip_address, admin_state=None, advertisement_interval=1):
         self.version = version
         self.vrid = vrid
         self.ip_address = ip_address
         self.admin_state = admin_state
+        self.advertisement_interval = advertisement_interval
 
     def setPort(self, ifname, ip_address, priority, vlan_id=None):
         self.port = {
@@ -58,7 +59,8 @@ class VRRPParam(object):
         param_dict = {CONF_KEY_VRRP_VERSION: self.version,
                 CONF_KEY_VRID: self.vrid,
                 CONF_KEY_IP_ADDR: self.ip_address,
-                CONF_KEY_ADMIN_STATE: self.admin_state
+                CONF_KEY_ADMIN_STATE: self.admin_state,
+                CONF_KEY_ADVERTISEMENT_INTERVAL: self.advertisement_interval
                 }
         param_dict.update(self.port)
         return param_dict
