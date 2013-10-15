@@ -107,10 +107,8 @@ class RpcVRRPManager(app_manager.RyuApp):
 
     def _config(self, endpoint, msgid, params):
         self.logger.debug('handle vrrp_config request')
-        vrrp_params_n = params[0]
-        print params
-        param_dict = vrrp_params_n[0]
-        print vrrp_params_n
+        param_dict = params[0]
+        print param_dict
         #port = param_dict['port']
 
         interface = vrrp_event.VRRPInterfaceNetworkDevice(
