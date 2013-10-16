@@ -159,13 +159,12 @@ class RpcVRRPManager(app_manager.RyuApp):
 
     def _config_change(self, endpoint, msgid, params):
         self.logger.debug('handle vrrp_config_change request')
-        param_dict = params[0]
-        vrid = param_dict[CONF_KEY_VRID]
+        config_values = params[0]
+        vrid = config_values[CONF_KEY_VRID]
         self.logger.info("VRID : %s", vrid)
         instance_name = self._lookup(vrid)
 
         if instance_name:
-            config_values = params[1]
             priority = config_values[CONF_KEY_PRIORITY] if CONF_KEY_PRIORITY in config_values else None
             adv_int = config_values[
                 CONF_KEY_ADVERTISEMENT_INTERVAL] if CONF_KEY_ADVERTISEMENT_INTERVAL in config_values else None
