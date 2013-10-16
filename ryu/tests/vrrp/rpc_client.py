@@ -57,7 +57,11 @@ def vrrp_config(client, args):
 
     vrrp_param = rpc_manager.VRRPParam(vrrp.VRRP_VERSION_V3, vrid, virtual_ipaddr)
     vrrp_param.setPort(ifname, nic_ipaddr, priority, vlan_id)
-    result = client.call("vrrp_config", [vrrp_param.toDict()])
+    param_dict = vrrp_param.toDict()
+    context = {'contexts': {'resource_id': 'vrrp_reource', 'resource_name': 'vrrp_session'}}
+    param_dict.update(context)
+    print param_dict
+    result = client.call("vrrp_config", [param_dict])
     print "api result : ", result
 
 
@@ -65,9 +69,9 @@ def vrrp_config_change(client, args):
     change_param = {rpc_manager.CONF_KEY_PRIORITY: args.priority,
                     rpc_manager.CONF_KEY_ADVERTISEMENT_INTERVAL: args.interval}
     vrid = args.vrid
-    vrrp_param = {'vrid':vrid}
-    vrrp_param.update(change_param)
-    result = client.call("vrrp_config_change", [vrrp_param])
+    param_dict = {'vrid':vrid}
+    param_dict.update(change_param)
+    result = client.call("vrrp_config_change", [param_dict])
     print "api result : ", result
 
 

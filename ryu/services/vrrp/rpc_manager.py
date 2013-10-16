@@ -49,6 +49,7 @@ class VRRPParam(object):
         self.preempt_mode = preempt_mode
         self.preempt_delay = preempt_delay
 
+
     def setPort(self, ifname, ip_address, priority, vlan_id=None):
         self.port = {
             CONF_KEY_PORT_IP_ADDR: ip_address,
