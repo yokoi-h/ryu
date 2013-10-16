@@ -117,9 +117,7 @@ class RpcVRRPManager(app_manager.RyuApp):
     def _config(self, endpoint, msgid, params):
         self.logger.debug('handle vrrp_config request')
         param_dict = params[0]
-        print param_dict
-        #port = param_dict['port']
-        print param_dict[CONF_KEY_PORT_IP_ADDR]
+
         interface = vrrp_event.VRRPInterfaceNetworkDevice(
             mac.DONTCARE,
             netaddr.IPAddress(param_dict[CONF_KEY_PORT_IP_ADDR]).value,
