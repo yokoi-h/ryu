@@ -319,3 +319,50 @@ class BGPSpeaker(object):
         show = {}
         show['params'] = ['rib', family]
         return call('operator.show', **show)
+
+    def prefix_list_add(self, neighbor_address, prefix_list):
+        """ This method adds prefix list to neighbor.
+
+        ``neighbor_address`` specifies the neighbor IP address
+
+        ``prefix_list`` specifies prefix list to filter route for advertisement. This
+        parameter must be PrefixList object.
+
+        """
+        func_name = 'prefixlist.add'
+        param = [neighbor_address, prefix_list]
+        call(func_name, *param)
+
+    def prefix_filter_del(self, neighbor_address, prefix_list):
+        """ This method adds prefix list to neighbor.
+
+        ``neighbor_address`` specifies the neighbor IP address
+
+        ``prefix_list`` specifies prefix list to filter route for advertisement. This
+        parameter must be PrefixList object.
+
+        """
+        func_name = 'prefixlist.del'
+        param = [neighbor_address, prefix_list]
+        call(func_name, *param)
+
+    def prefix_filter_get(self, neighbor_address):
+        """ This method returns prefix lists corresponding the neighbor.
+
+        ``neighbor_address`` specifies the neighbor IP address
+
+        """
+        func_name = 'prefixlist.get'
+        param = [neighbor_address]
+        prefix_lists = call(func_name, *param)
+        return prefix_lists
+
+    def prefix_filter_clear(self, neighbor_address):
+        """ This method clear prefix lists corresponding the neighbor.
+
+        ``neighbor_address`` specifies the neighbor IP address
+
+        """
+        func_name = 'prefixlist.clear'
+        param = [neighbor_address]
+        prefix_lists = call(func_name, *param)

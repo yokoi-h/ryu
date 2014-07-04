@@ -185,3 +185,34 @@ def del_network(prefix):
     tm = CORE_MANAGER.get_core_service().table_manager
     tm.add_to_global_table(prefix, is_withdraw=True)
     return True
+
+# =============================================================================
+# advertisement configuration related APIs
+# =============================================================================
+
+
+@register(name='prefixlist.add')
+def add_prefixlist(neighbor_address, prefix_list):
+    peer_manager = CORE_MANAGER.get_core_service().peer_manager
+    peer = peer_manager.get_peer_by_id(neighbor_address)
+    peer.add_prefix_filter(prefix_list)
+    return True
+
+@register(name='prefixlist.del')
+def del_prefixlist(neighbor_address, prefix_list):
+    peer_manager = CORE_MANAGER.get_core_service().peer_manager
+    peer = peer_manager.get_peer_by_id(neighbor_address)
+    peer.del_prefix_filter(prefix_list)
+    return True
+
+@register(name='prefixlist.get')
+def get_prefixlist(neighbor_address):
+    peer_manager = CORE_MANAGER.get_core_service().peer_manager
+    peer = peer_manager.get_peer_by_id(neighbor_address)
+    return peer.prefix_list
+
+@register(name='prefixlist.clear')
+def clear_prefixlist(neighbor_address):
+    peer_manager = CORE_MANAGER.get_core_service().peer_manager
+    peer = peer_manager.get_peer_by_id(neighbor_address)
+    return peer.clear_prefix_list

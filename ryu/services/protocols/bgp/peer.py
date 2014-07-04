@@ -114,7 +114,6 @@ PeerCounterNames = namedtuple(
     'fms_established_transitions'
 )
 
-
 class PeerState(object):
     """A BGP neighbor state. Think of this class as of information and stats
     container for Peer.
@@ -323,6 +322,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
+        # Prefix List
+        self._prefix_list_array = []
+
     @property
     def remote_as(self):
         return self._neigh_conf.remote_as
@@ -483,6 +485,17 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         Also, checks if any policies prevent sending this message.
         Populates Adj-RIB-out with corresponding `SentRoute`.
         """
+
+        # TODO evaluate prefix carefully
+        # TODO investigate the needs of sending withdraw for sent_route if set deny
+        # TODO cover IPv6
+        # evaluate prefix list
+        for prefix_list in self._prefix_list_array:
+            nlri = outgoing_route.path.nlri
+            result = prefix_list.evaluate(nlri)
+            if not result:
+                return
+
         # TODO(PH): optimized by sending several prefixes per update.
         # Construct and send update message.
         update_msg = self._construct_update(outgoing_route)
@@ -1719,3 +1732,23 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             if self._neigh_conf.enabled:
                 if not self._connect_retry_event.is_set():
                     self._connect_retry_event.set()
+
+    def add_prefix_list(self, prefix_list):
+        """add prefix_list.
+        """
+        self._prefix_list_array.append(prefix_list)
+
+    def del_prefix_list(self, prefix_list):
+        """delete prefix_list.
+        """
+        if prefix_list in self._prefix_list_array:
+            self._prefix_list_array.remove(prefix_list)
+
+    def clear_prefix_list(self):
+        """clear prefix_list array.
+        """
+        self._prefix_list_array = []
+
+    @property
+    def prefix_list(self):
+        return self._prefix_list_array
