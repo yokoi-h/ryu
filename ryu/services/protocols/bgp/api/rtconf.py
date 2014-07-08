@@ -56,7 +56,7 @@ def _get_neighbor_conf(neigh_ip_address):
 def create_neighbor(**kwargs):
     neigh_conf = NeighborConf(**kwargs)
     CORE_MANAGER.neighbors_conf.add_neighbor_conf(neigh_conf)
-    return True
+    return True, neigh_conf
 
 
 @RegisterWithArgChecks(name='neighbor.update_enabled',
@@ -78,6 +78,9 @@ def update_neighbor(neigh_ip_address, changes):
         if k == neighbors.ENABLED:
             rets.append(update_neighbor_enabled(neigh_ip_address, v))
 
+        if k == neighbors.OUT_FILTER:
+            rets.append(_update_outfilter(neigh_ip_address, v))
+
     return all(rets)
 
 
@@ -87,6 +90,10 @@ def _update_med(neigh_ip_address, value):
     LOG.info('MED value for neigh: %s updated to %s' % (neigh_conf, value))
     return True
 
+def _update_outfilter(neigh_ip_address, prefix_lists):
+    neigh_conf = _get_neighbor_conf(neigh_ip_address)
+    neigh_conf.set_out_filter(prefix_lists)
+    return True
 
 @RegisterWithArgChecks(name='neighbor.delete',
                        req_args=[neighbors.IP_ADDRESS])
@@ -186,33 +193,3 @@ def del_network(prefix):
     tm.add_to_global_table(prefix, is_withdraw=True)
     return True
 
-# =============================================================================
-# advertisement configuration related APIs
-# =============================================================================
-
-
-@register(name='prefixlist.add')
-def add_prefixlist(neighbor_address, prefix_list):
-    peer_manager = CORE_MANAGER.get_core_service().peer_manager
-    peer = peer_manager.get_peer_by_id(neighbor_address)
-    peer.add_prefix_filter(prefix_list)
-    return True
-
-@register(name='prefixlist.del')
-def del_prefixlist(neighbor_address, prefix_list):
-    peer_manager = CORE_MANAGER.get_core_service().peer_manager
-    peer = peer_manager.get_peer_by_id(neighbor_address)
-    peer.del_prefix_filter(prefix_list)
-    return True
-
-@register(name='prefixlist.get')
-def get_prefixlist(neighbor_address):
-    peer_manager = CORE_MANAGER.get_core_service().peer_manager
-    peer = peer_manager.get_peer_by_id(neighbor_address)
-    return peer.prefix_list
-
-@register(name='prefixlist.clear')
-def clear_prefixlist(neighbor_address):
-    peer_manager = CORE_MANAGER.get_core_service().peer_manager
-    peer = peer_manager.get_peer_by_id(neighbor_address)
-    return peer.clear_prefix_list

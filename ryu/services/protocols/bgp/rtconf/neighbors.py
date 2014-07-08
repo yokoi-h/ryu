@@ -59,6 +59,7 @@ from ryu.services.protocols.bgp.rtconf.base import SITE_OF_ORIGINS
 from ryu.services.protocols.bgp.rtconf.base import validate
 from ryu.services.protocols.bgp.rtconf.base import validate_med
 from ryu.services.protocols.bgp.rtconf.base import validate_soo_list
+from ryu.services.protocols.bgp.rtconf.base import OUT_FILTER
 from ryu.services.protocols.bgp.utils.validation import is_valid_ipv4
 from ryu.services.protocols.bgp.utils.validation import is_valid_old_asn
 
@@ -245,6 +246,9 @@ class NeighborConf(ConfWithId, ConfWithStats):
         self._settings[RTC_AS] = \
             compute_optional_conf(RTC_AS, default_rt_as, **kwargs)
 
+        # prefix list configuration
+        self._settings[OUT_FILTER] = []
+
         # Since ConfWithId' default values use str(self) and repr(self), we
         # call super method after we have initialized other settings.
         super(NeighborConf, self)._init_opt_settings(**kwargs)
@@ -371,6 +375,28 @@ class NeighborConf(ConfWithId, ConfWithStats):
     @property
     def rtc_as(self):
         return self._settings[RTC_AS]
+
+    @property
+    def out_filter(self):
+        return self._settings[OUT_FILTER]
+
+    def set_out_filter(self, prefix_lists):
+        self._settings[OUT_FILTER] = []
+        initial_seq = 0
+
+        for prefix_list in prefix_lists:
+            if not prefix_list.seq:
+                initial_seq += 5
+                prefix_list.seq = initial_seq
+            else:
+                seq = prefix_list.seq
+                if seq >= initial_seq:
+                    initial_seq = seq + 5
+
+            self._settings[OUT_FILTER].append(prefix_list)
+        self._settings[OUT_FILTER].sort(key=lambda x: x.seq)
+        LOG.debug('set out-filter')
+
 
     def exceeds_max_prefix_allowed(self, prefix_count):
         allowed_max = self._settings[MAX_PREFIXES]

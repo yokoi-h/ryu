@@ -29,6 +29,7 @@ from ryu.services.protocols.bgp.base import SUPPORTED_GLOBAL_RF
 from ryu.services.protocols.bgp import constants as const
 from ryu.services.protocols.bgp.model import OutgoingRoute
 from ryu.services.protocols.bgp.model import SentRoute
+from ryu.services.protocols.bgp.model import PrefixList
 from ryu.services.protocols.bgp.net_ctrl import NET_CONTROLLER
 from ryu.services.protocols.bgp.rtconf.neighbors import NeighborConfListener
 from ryu.services.protocols.bgp.signals.emit import BgpSignalBus
@@ -322,8 +323,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
-        # Prefix List
-        self._prefix_list_array = []
 
     @property
     def remote_as(self):
@@ -486,14 +485,24 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         Populates Adj-RIB-out with corresponding `SentRoute`.
         """
 
-        # TODO evaluate prefix carefully
         # TODO investigate the needs of sending withdraw for sent_route if set deny
         # TODO cover IPv6
         # evaluate prefix list
-        for prefix_list in self._prefix_list_array:
-            nlri = outgoing_route.path.nlri
-            result = prefix_list.evaluate(nlri)
-            if not result:
+        if self._neigh_conf.cap_mbgp_ipv4:
+            prefix_lists = self._neigh_conf.prefix_lists
+            allow_to_send = True
+
+            for prefix_list in prefix_lists:
+                allow_to_send = False
+                nlri = outgoing_route.path.nlri
+                LOG.debug('evaluate prefix : %s' % nlri)
+                policy, is_matched = prefix_list.evaluate(nlri)
+                if policy == PrefixList.POLICY_PERMIT and is_matched:
+                    allow_to_send = True
+                    break
+
+            if not allow_to_send:
+                LOG.debug('prefix : %s is not sent because of out-filter' % nlri)
                 return
 
         # TODO(PH): optimized by sending several prefixes per update.

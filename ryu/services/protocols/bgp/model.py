@@ -154,20 +154,46 @@ class PrefixList(object):
     POLICY_DENY = 0
     POLICY_PERMIT = 1
 
-    def __init__(self, prefix, policy=POLICY_PERMIT, ge=None, le=None, seq=10):
+    def __init__(self, prefix, policy=POLICY_PERMIT, ge=None, le=None, seq=None):
         self.prefix = prefix
         self.policy = policy
         self.network = IPNetwork(prefix)
-        self.ge = ge
-        self.le = le
+        self._ge = ge
+        self._le = le
         self.seq = seq
 
-    # TODO implement evaluation logic precisely
+    def __cmp__(self, other):
+        return cmp(self.prefix, other.prefix)
+
+    @property
+    def ge(self):
+        return self._ge
+
+    @property
+    def le(self):
+        return self._le
+
     def evaluate(self, prefix):
+        result = False
         net = IPNetwork(prefix)
-        ret = net == self.network
+        if net in self.network:
+            if self._ge is None and self._le is None:
+                result = True
+            elif self._ge is None and self._le is not None:
+                prefixlen = net.prefixlen
+                if prefixlen <= self._le:
+                    result = True
+            elif self._ge is not None and self._le is None:
+                prefixlen = net.prefixlen
+                if prefixlen >= self._ge:
+                    result = True
+            elif self._ge is not None and self._le is not None:
+                prefixlen = net.prefixlen
+                if self._ge <= prefixlen and prefixlen <= self._le:
+                    result = True
+
         if self.policy == self.POLICY_PERMIT:
-            return ret
+            return result
         if self.policy == self.POLICY_DENY:
-            return not ret
+            return not result
 
