@@ -56,7 +56,7 @@ def _get_neighbor_conf(neigh_ip_address):
 def create_neighbor(**kwargs):
     neigh_conf = NeighborConf(**kwargs)
     CORE_MANAGER.neighbors_conf.add_neighbor_conf(neigh_conf)
-    return True, neigh_conf
+    return True
 
 
 @RegisterWithArgChecks(name='neighbor.update_enabled',
