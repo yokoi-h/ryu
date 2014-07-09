@@ -323,6 +323,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
+        # withdraw path by outfilter
+        self._withdraw_by_outfilter = []
 
     @property
     def remote_as(self):
@@ -440,6 +442,30 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             negotiated_afs = self._protocol.negotiated_afs
             for af in negotiated_afs:
                 self._fire_route_refresh(af)
+
+    def on_update_out_filter(self, conf_evt):
+        LOG.debug('on_update_out_filter fired')
+        prefix_lists = conf_evt['prefix_lists']
+        rf = conf_evt['route_family']
+        if len(prefix_lists) > 0:
+            table = self._core_service.table_manager.get_global_table_by_route_family(rf)
+            for destination in table.itervalues():
+                sent_routes = destination.sent_routes_by_peer(self)
+                if len(sent_routes) == 0:
+                    continue
+
+                for sent_route in sent_routes:
+                    nlri = sent_route.path.nlri
+                    nlri_str = nlri.formatted_nlri_str
+                    for pl in prefix_lists:
+                        policy, result = pl.evaluate(nlri)
+                        if (policy != PrefixList.POLICY_PERMIT) or (not result):
+                            # send withdraw routes that have already been sent
+                            destination.withdraw_if_sent_to(self)
+                            self._withdraw_by_outfilter.append(nlri_str)
+                            LOG.debug('send withdraw %s because of out filter' % nlri_str)
+
+        self._peer_manager.resend_sent(rf, self)
 
     def __str__(self):
         return 'Peer(ip: %s, asn: %s)' % (self._neigh_conf.ip_address,

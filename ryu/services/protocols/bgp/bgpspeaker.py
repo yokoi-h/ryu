@@ -330,7 +330,12 @@ class BGPSpeaker(object):
 
         """
         func_name = 'neighbor.update'
-        filter_param = {neighbors.OUT_FILTER: prefix_lists}
+
+        from ryu.lib.packet.bgp import RF_IPv4_UC
+
+        prefix_value = {'prefix_lists': prefix_lists, 'route_family': RF_IPv4_UC}
+        filter_param = {neighbors.OUT_FILTER: prefix_value}
+
         param = {}
         param[neighbors.IP_ADDRESS] = neighbor_address
         param[neighbors.CHANGES] = filter_param

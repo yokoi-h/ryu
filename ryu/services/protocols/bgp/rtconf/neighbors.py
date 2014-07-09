@@ -171,8 +171,9 @@ class NeighborConf(ConfWithId, ConfWithStats):
 
     UPDATE_ENABLED_EVT = 'update_enabled_evt'
     UPDATE_MED_EVT = 'update_med_evt'
+    UPDATE_OUT_FILTER_EVT = 'update_out_filter_evt'
 
-    VALID_EVT = frozenset([UPDATE_ENABLED_EVT, UPDATE_MED_EVT])
+    VALID_EVT = frozenset([UPDATE_ENABLED_EVT, UPDATE_MED_EVT, UPDATE_OUT_FILTER_EVT])
     REQUIRED_SETTINGS = frozenset([REMOTE_AS, IP_ADDRESS])
     OPTIONAL_SETTINGS = frozenset([CAP_REFRESH,
                                    CAP_ENHANCED_REFRESH,
@@ -381,10 +382,11 @@ class NeighborConf(ConfWithId, ConfWithStats):
     def out_filter(self):
         return self._settings[OUT_FILTER]
 
-    def set_out_filter(self, prefix_lists):
+    @out_filter.setter
+    def out_filter(self, value):
         self._settings[OUT_FILTER] = []
         initial_seq = 0
-
+        prefix_lists = value['prefix_lists']
         for prefix_list in prefix_lists:
             if not prefix_list.seq:
                 initial_seq += 5
@@ -396,8 +398,10 @@ class NeighborConf(ConfWithId, ConfWithStats):
 
             self._settings[OUT_FILTER].append(prefix_list)
         self._settings[OUT_FILTER].sort(key=lambda x: x.seq)
-        LOG.debug('set out-filter')
+        LOG.debug('set out-filter : %s' % prefix_lists)
 
+        # check sent_route
+        self._notify_listeners(NeighborConf.UPDATE_OUT_FILTER_EVT, value)
 
     def exceeds_max_prefix_allowed(self, prefix_count):
         allowed_max = self._settings[MAX_PREFIXES]
@@ -542,6 +546,8 @@ class NeighborConfListener(ConfWithIdListener, ConfWithStatsListener):
                                 self.on_update_enabled)
         neigh_conf.add_listener(NeighborConf.UPDATE_MED_EVT,
                                 self.on_update_med)
+        neigh_conf.add_listener(NeighborConf.UPDATE_OUT_FILTER_EVT,
+                                self.on_update_out_filter)
 
     @abstractmethod
     def on_update_enabled(self, evt):
@@ -550,6 +556,9 @@ class NeighborConfListener(ConfWithIdListener, ConfWithStatsListener):
     def on_update_med(self, evt):
         raise NotImplementedError('This method should be overridden.')
 
+    @abstractmethod
+    def on_update_out_filter(self, evt):
+        raise NotImplementedError('This method should be overridden.')
 
 class NeighborsConfListener(BaseConfListener):
     """Base listener for change events to neighbor configuration container."""
