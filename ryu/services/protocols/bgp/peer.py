@@ -489,7 +489,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # TODO cover IPv6
         # evaluate prefix list
         if self._neigh_conf.cap_mbgp_ipv4:
-            prefix_lists = self._neigh_conf.prefix_lists
+            prefix_lists = self._neigh_conf.out_filter
             allow_to_send = True
 
             for prefix_list in prefix_lists:

@@ -74,6 +74,7 @@ LOCAL_ADDRESS = 'local_address'
 LOCAL_PORT = 'local_port'
 PEER_NEXT_HOP = 'next_hop'
 PASSWORD = 'password'
+OUT_FILTER = 'out_filter'
 
 # Default value constants.
 DEFAULT_CAP_GR_NULL = True
@@ -103,7 +104,7 @@ def validate_enabled(enabled):
 @validate(name=CHANGES)
 def validate_changes(changes):
     for k, v in changes.iteritems():
-        if k not in (MULTI_EXIT_DISC, ENABLED):
+        if k not in (MULTI_EXIT_DISC, ENABLED, OUT_FILTER):
             raise ConfigValueError(desc="Unknown field to change: %s" % k)
 
         if k == MULTI_EXIT_DISC:

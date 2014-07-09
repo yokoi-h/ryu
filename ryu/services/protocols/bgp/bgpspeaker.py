@@ -331,6 +331,8 @@ class BGPSpeaker(object):
         """
         func_name = 'neighbor.update'
         filter_param = {neighbors.OUT_FILTER: prefix_lists}
-        param = [neighbor_address, filter_param]
-        call(func_name, *param)
+        param = {}
+        param[neighbors.IP_ADDRESS] = neighbor_address
+        param[neighbors.CHANGES] = filter_param
+        call(func_name, **param)
 

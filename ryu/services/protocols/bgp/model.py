@@ -175,25 +175,23 @@ class PrefixList(object):
 
     def evaluate(self, prefix):
         result = False
-        net = IPNetwork(prefix)
+        length = prefix.length
+        net = IPNetwork(prefix.formatted_nlri_str)
+
         if net in self.network:
             if self._ge is None and self._le is None:
                 result = True
-            elif self._ge is None and self._le is not None:
-                prefixlen = net.prefixlen
-                if prefixlen <= self._le:
-                    result = True
-            elif self._ge is not None and self._le is None:
-                prefixlen = net.prefixlen
-                if prefixlen >= self._ge:
-                    result = True
-            elif self._ge is not None and self._le is not None:
-                prefixlen = net.prefixlen
-                if self._ge <= prefixlen and prefixlen <= self._le:
+
+            elif self._ge is None and self._le:
+                if length <= self._le:
                     result = True
 
-        if self.policy == self.POLICY_PERMIT:
-            return result
-        if self.policy == self.POLICY_DENY:
-            return not result
+            elif self._ge and self._le is None:
+                if self._ge <= length:
+                    result = True
 
+            elif self._ge and self._le:
+                if self._ge <= length <= self._le:
+                    result = True
+
+        return self.policy, result
