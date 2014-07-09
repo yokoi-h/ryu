@@ -445,8 +445,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
     def on_update_out_filter(self, conf_evt):
         LOG.debug('on_update_out_filter fired')
-        prefix_lists = conf_evt['prefix_lists']
-        rf = conf_evt['route_family']
+        event_value = conf_evt.value
+        prefix_lists = event_value['prefix_lists']
+        rf = event_value['route_family']
         if len(prefix_lists) > 0:
             table = self._core_service.table_manager.get_global_table_by_route_family(rf)
             for destination in table.itervalues():
