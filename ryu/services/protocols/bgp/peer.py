@@ -29,6 +29,7 @@ from ryu.services.protocols.bgp.base import SUPPORTED_GLOBAL_RF
 from ryu.services.protocols.bgp import constants as const
 from ryu.services.protocols.bgp.model import OutgoingRoute
 from ryu.services.protocols.bgp.model import SentRoute
+from ryu.services.protocols.bgp.model import PrefixList
 from ryu.services.protocols.bgp.net_ctrl import NET_CONTROLLER
 from ryu.services.protocols.bgp.rtconf.neighbors import NeighborConfListener
 from ryu.services.protocols.bgp.signals.emit import BgpSignalBus
@@ -113,7 +114,6 @@ PeerCounterNames = namedtuple(
     'recv_refresh',
     'fms_established_transitions'
 )
-
 
 class PeerState(object):
     """A BGP neighbor state. Think of this class as of information and stats
@@ -323,6 +323,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
+
     @property
     def remote_as(self):
         return self._neigh_conf.remote_as
@@ -440,6 +441,41 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             for af in negotiated_afs:
                 self._fire_route_refresh(af)
 
+    def on_update_out_filter(self, conf_evt):
+        LOG.debug('on_update_out_filter fired')
+        event_value = conf_evt.value
+        prefix_lists = event_value['prefix_lists']
+        rf = event_value['route_family']
+
+        table = self._core_service.table_manager.get_global_table_by_route_family(rf)
+        for destination in table.itervalues():
+            sent_routes = destination.sent_routes_by_peer(self)
+            if len(sent_routes) == 0:
+                continue
+
+            for sent_route in sent_routes:
+                nlri = sent_route.path.nlri
+                nlri_str = nlri.formatted_nlri_str
+                send_withdraw = True
+                for pl in prefix_lists:
+                    policy, result = pl.evaluate(nlri)
+
+                    if policy == PrefixList.POLICY_PERMIT and result:
+                        send_withdraw = False
+                        break
+
+                outgoing_route = None
+                if send_withdraw:
+                    # send withdraw routes that have already been sent
+                    withdraw_clone = sent_route.path.clone(for_withdrawal=True)
+                    outgoing_route = OutgoingRoute(withdraw_clone)
+                    LOG.debug('send withdraw %s because of out filter' % nlri_str)
+                else:
+                    outgoing_route = OutgoingRoute(sent_route.path, for_route_refresh=True)
+                    LOG.debug('resend path : %s' % nlri_str)
+
+                self.enque_outgoing_msg(outgoing_route)
+
     def __str__(self):
         return 'Peer(ip: %s, asn: %s)' % (self._neigh_conf.ip_address,
                                           self._neigh_conf.remote_as)
@@ -483,6 +519,26 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         Also, checks if any policies prevent sending this message.
         Populates Adj-RIB-out with corresponding `SentRoute`.
         """
+
+        # TODO support IPv6
+        # evaluate prefix list
+        if self._neigh_conf.cap_mbgp_ipv4:
+            prefix_lists = self._neigh_conf.out_filter
+            allow_to_send = True
+
+            if not outgoing_route.path.is_withdraw:
+                for prefix_list in prefix_lists:
+                    allow_to_send = False
+                    nlri = outgoing_route.path.nlri
+                    policy, is_matched = prefix_list.evaluate(nlri)
+                    if policy == PrefixList.POLICY_PERMIT and is_matched:
+                        allow_to_send = True
+                        break
+
+                if not allow_to_send:
+                    LOG.debug('prefix : %s is not sent because of out-filter' % nlri)
+                    return
+
         # TODO(PH): optimized by sending several prefixes per update.
         # Construct and send update message.
         update_msg = self._construct_update(outgoing_route)

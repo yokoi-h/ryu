@@ -19,7 +19,7 @@
  sessions.
 """
 import logging
-
+from netaddr.ip import IPAddress, IPNetwork
 
 LOG = logging.getLogger('bgpspeaker.model')
 
@@ -146,3 +146,52 @@ class SentRoute(object):
     @property
     def sent_peer(self):
         return self._sent_peer
+
+
+class PrefixList(object):
+    """Holds prefix information to filter for outgoing routes
+    """
+    POLICY_DENY = 0
+    POLICY_PERMIT = 1
+
+    def __init__(self, prefix, policy=POLICY_PERMIT, ge=None, le=None, seq=None):
+        self.prefix = prefix
+        self.policy = policy
+        self.network = IPNetwork(prefix)
+        self._ge = ge
+        self._le = le
+        self.seq = seq
+
+    def __cmp__(self, other):
+        return cmp(self.prefix, other.prefix)
+
+    @property
+    def ge(self):
+        return self._ge
+
+    @property
+    def le(self):
+        return self._le
+
+    def evaluate(self, prefix):
+        result = False
+        length = prefix.length
+        net = IPNetwork(prefix.formatted_nlri_str)
+        LOG.debug('evaluate prefix : %s and %s' % (self.prefix, prefix.formatted_nlri_str))
+        if net in self.network:
+            if self._ge is None and self._le is None:
+                result = True
+
+            elif self._ge is None and self._le:
+                if length <= self._le:
+                    result = True
+
+            elif self._ge and self._le is None:
+                if self._ge <= length:
+                    result = True
+
+            elif self._ge and self._le:
+                if self._ge <= length <= self._le:
+                    result = True
+
+        return self.policy, result

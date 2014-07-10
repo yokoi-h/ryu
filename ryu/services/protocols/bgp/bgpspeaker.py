@@ -319,3 +319,28 @@ class BGPSpeaker(object):
         show = {}
         show['params'] = ['rib', family]
         return call('operator.show', **show)
+
+    def out_filter_set(self, neighbor_address, prefix_lists):
+        """ This method sets out-filter to neighbor.
+
+        ``neighbor_address`` specifies the neighbor IP address
+
+        ``prefix_lists`` specifies prefix list to filter route for advertisement. This
+        parameter must be PrefixList object.
+
+        We can create PrefixList object as follows.
+         prefix_list = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_PERMIT)
+
+        """
+        func_name = 'neighbor.update'
+
+        from ryu.lib.packet.bgp import RF_IPv4_UC
+
+        prefix_value = {'prefix_lists': prefix_lists, 'route_family': RF_IPv4_UC}
+        filter_param = {neighbors.OUT_FILTER: prefix_value}
+
+        param = {}
+        param[neighbors.IP_ADDRESS] = neighbor_address
+        param[neighbors.CHANGES] = filter_param
+        call(func_name, **param)
+
