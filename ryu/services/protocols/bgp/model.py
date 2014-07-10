@@ -177,7 +177,7 @@ class PrefixList(object):
         result = False
         length = prefix.length
         net = IPNetwork(prefix.formatted_nlri_str)
-
+        LOG.debug('evaluate prefix : %s and %s' % (self.prefix, prefix.formatted_nlri_str))
         if net in self.network:
             if self._ge is None and self._le is None:
                 result = True

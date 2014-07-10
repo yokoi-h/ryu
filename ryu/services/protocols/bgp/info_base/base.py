@@ -639,7 +639,7 @@ class Destination(object):
         """
         result = []
         for route in self._sent_routes.values():
-            if route.peer == peer:
+            if route.sent_peer == peer:
                 result.append(route)
 
         return result

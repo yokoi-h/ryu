@@ -328,6 +328,9 @@ class BGPSpeaker(object):
         ``prefix_lists`` specifies prefix list to filter route for advertisement. This
         parameter must be PrefixList object.
 
+        We can create PrefixList object as follows.
+         prefix_list = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_PERMIT)
+
         """
         func_name = 'neighbor.update'
 

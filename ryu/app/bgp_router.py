@@ -61,12 +61,20 @@ class BGPRouter(RyuApp):
         self.speaker.neighbor_add(ipaddress, as_number, next_hop=next_hop)
         self.speaker.prefix_add('10.5.111.0/24')
         self.speaker.prefix_add('10.5.112.0/24')
+        self.speaker.prefix_add('10.5.113.0/24')
         self._neighbor_config(ipaddress)
 
     def _neighbor_config(self, ipaddress):
-        pList1 = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_DENY)
+        pList1 = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_PERMIT)
         pList2 = PrefixList('10.5.112.0/24',policy=PrefixList.POLICY_PERMIT)
-        self.speaker.out_filter_set(ipaddress, [pList1, pList2])
+        pList3 = PrefixList('10.5.113.0/24',policy=PrefixList.POLICY_PERMIT)
+
+        hub.sleep(15)
+        print 'set out-filter 1'
+        hub.spawn(self._send_prefix_lists, ipaddress,[pList1, pList2])
+        hub.sleep(15)
+        print 'set out-filter 2'
+        hub.spawn(self._send_prefix_lists, ipaddress,[pList2, pList3])
 
     def _add_prefix(self, prefix, next_hop):
         for router in self.router_list:
@@ -75,4 +83,6 @@ class BGPRouter(RyuApp):
             msg = router.set_data(0, param, waiters)
             self.logger.info(msg)
 
+    def _send_prefix_lists(self, ipaddress, prefixList):
+        self.speaker.out_filter_set(ipaddress, prefixList)
 

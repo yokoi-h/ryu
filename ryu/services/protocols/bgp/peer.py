@@ -323,8 +323,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
-        # withdraw path by outfilter
-        self._withdraw_by_outfilter = []
 
     @property
     def remote_as(self):
@@ -448,25 +446,35 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         event_value = conf_evt.value
         prefix_lists = event_value['prefix_lists']
         rf = event_value['route_family']
-        if len(prefix_lists) > 0:
-            table = self._core_service.table_manager.get_global_table_by_route_family(rf)
-            for destination in table.itervalues():
-                sent_routes = destination.sent_routes_by_peer(self)
-                if len(sent_routes) == 0:
-                    continue
 
-                for sent_route in sent_routes:
-                    nlri = sent_route.path.nlri
-                    nlri_str = nlri.formatted_nlri_str
-                    for pl in prefix_lists:
-                        policy, result = pl.evaluate(nlri)
-                        if (policy != PrefixList.POLICY_PERMIT) or (not result):
-                            # send withdraw routes that have already been sent
-                            destination.withdraw_if_sent_to(self)
-                            self._withdraw_by_outfilter.append(nlri_str)
-                            LOG.debug('send withdraw %s because of out filter' % nlri_str)
+        table = self._core_service.table_manager.get_global_table_by_route_family(rf)
+        for destination in table.itervalues():
+            sent_routes = destination.sent_routes_by_peer(self)
+            if len(sent_routes) == 0:
+                continue
 
-        self._peer_manager.resend_sent(rf, self)
+            for sent_route in sent_routes:
+                nlri = sent_route.path.nlri
+                nlri_str = nlri.formatted_nlri_str
+                send_withdraw = True
+                for pl in prefix_lists:
+                    policy, result = pl.evaluate(nlri)
+
+                    if policy == PrefixList.POLICY_PERMIT and result:
+                        send_withdraw = False
+                        break
+
+                outgoing_route = None
+                if send_withdraw:
+                    # send withdraw routes that have already been sent
+                    withdraw_clone = sent_route.path.clone(for_withdrawal=True)
+                    outgoing_route = OutgoingRoute(withdraw_clone)
+                    LOG.debug('send withdraw %s because of out filter' % nlri_str)
+                else:
+                    outgoing_route = OutgoingRoute(sent_route.path, for_route_refresh=True)
+                    LOG.debug('resend path : %s' % nlri_str)
+
+                self.enque_outgoing_msg(outgoing_route)
 
     def __str__(self):
         return 'Peer(ip: %s, asn: %s)' % (self._neigh_conf.ip_address,
@@ -519,18 +527,18 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             prefix_lists = self._neigh_conf.out_filter
             allow_to_send = True
 
-            for prefix_list in prefix_lists:
-                allow_to_send = False
-                nlri = outgoing_route.path.nlri
-                LOG.debug('evaluate prefix : %s' % nlri)
-                policy, is_matched = prefix_list.evaluate(nlri)
-                if policy == PrefixList.POLICY_PERMIT and is_matched:
-                    allow_to_send = True
-                    break
+            if not outgoing_route.path.is_withdraw:
+                for prefix_list in prefix_lists:
+                    allow_to_send = False
+                    nlri = outgoing_route.path.nlri
+                    policy, is_matched = prefix_list.evaluate(nlri)
+                    if policy == PrefixList.POLICY_PERMIT and is_matched:
+                        allow_to_send = True
+                        break
 
-            if not allow_to_send:
-                LOG.debug('prefix : %s is not sent because of out-filter' % nlri)
-                return
+                if not allow_to_send:
+                    LOG.debug('prefix : %s is not sent because of out-filter' % nlri)
+                    return
 
         # TODO(PH): optimized by sending several prefixes per update.
         # Construct and send update message.
