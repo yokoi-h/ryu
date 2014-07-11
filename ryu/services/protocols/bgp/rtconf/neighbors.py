@@ -385,19 +385,11 @@ class NeighborConf(ConfWithId, ConfWithStats):
     @out_filter.setter
     def out_filter(self, value):
         self._settings[OUT_FILTER] = []
-        initial_seq = 0
         prefix_lists = value['prefix_lists']
         for prefix_list in prefix_lists:
-            if not prefix_list.seq:
-                initial_seq += 5
-                prefix_list.seq = initial_seq
-            else:
-                seq = prefix_list.seq
-                if seq >= initial_seq:
-                    initial_seq = seq + 5
+            # copy PrefixList object and put it in the _settings
+            self._settings[OUT_FILTER].append(prefix_list.clone())
 
-            self._settings[OUT_FILTER].append(prefix_list)
-        self._settings[OUT_FILTER].sort(key=lambda x: x.seq)
         LOG.debug('set out-filter : %s' % prefix_lists)
 
         # check sent_route
