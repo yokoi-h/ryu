@@ -449,6 +449,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
         table = self._core_service.table_manager.get_global_table_by_route_family(rf)
         for destination in table.itervalues():
+            LOG.debug('dest : %s' % destination)
             sent_routes = destination.sent_routes_by_peer(self)
             if len(sent_routes) == 0:
                 continue
@@ -456,12 +457,12 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             for sent_route in sent_routes:
                 nlri = sent_route.path.nlri
                 nlri_str = nlri.formatted_nlri_str
-                send_withdraw = True
+                send_withdraw = False
                 for pl in prefix_lists:
                     policy, result = pl.evaluate(nlri)
 
-                    if policy == PrefixList.POLICY_PERMIT and result:
-                        send_withdraw = False
+                    if policy == PrefixList.POLICY_DENY and result:
+                        send_withdraw = True
                         break
 
                 outgoing_route = None
@@ -522,13 +523,12 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
         # evaluate prefix list
         rf = outgoing_route.path.route_family
+        allow_to_send = True
         if rf in (RF_IPv4_UC, RF_IPv6_UC):
             prefix_lists = self._neigh_conf.out_filter
-            allow_to_send = True
 
             if not outgoing_route.path.is_withdraw:
                 for prefix_list in prefix_lists:
-                    #allow_to_send = True
                     nlri = outgoing_route.path.nlri
                     policy, is_matched = prefix_list.evaluate(nlri)
                     if policy == PrefixList.POLICY_PERMIT and is_matched:
@@ -539,16 +539,15 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                         blocked_cause = prefix_list.prefix + ' - DENY'
                         break
 
-                if not allow_to_send:
-                    LOG.debug('prefix : %s is not sent by filter : %s' % (nlri, blocked_cause))
-                    return
-
         # TODO(PH): optimized by sending several prefixes per update.
         # Construct and send update message.
-        update_msg = self._construct_update(outgoing_route)
-        self._protocol.send(update_msg)
-        # Collect update statistics.
-        self.state.incr(PeerCounterNames.SENT_UPDATES)
+        if allow_to_send:
+            update_msg = self._construct_update(outgoing_route)
+            self._protocol.send(update_msg)
+            # Collect update statistics.
+            self.state.incr(PeerCounterNames.SENT_UPDATES)
+        else:
+            LOG.debug('prefix : %s is not sent by filter : %s' % (nlri, blocked_cause))
 
         # We have to create sent_route for every OutgoingRoute which is
         # not a withdraw or was for route-refresh msg.
