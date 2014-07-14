@@ -461,7 +461,10 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 for pl in prefix_lists:
                     policy, result = pl.evaluate(nlri)
 
-                    if policy == PrefixList.POLICY_DENY and result:
+                    if policy == PrefixList.POLICY_PERMIT and result:
+                        send_withdraw = False
+                        break
+                    elif policy == PrefixList.POLICY_DENY and result:
                         send_withdraw = True
                         break
 
