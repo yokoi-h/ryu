@@ -125,6 +125,10 @@ class PrefixList(object):
     def __cmp__(self, other):
         return cmp(self.prefix, other.prefix)
 
+    def __repr__(self):
+        policy = 'PERMIT' if self._policy == self.POLICY_PERMIT else 'DENY'
+        return 'prefix=%s, policy=%s, ge=%s, le=%s' % (self._prefix, policy, self._ge, self._le)
+
     @property
     def prefix(self):
         return self._prefix
