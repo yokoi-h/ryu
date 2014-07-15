@@ -456,7 +456,7 @@ class BGPSpeaker(object):
         ``prefix_lists`` specifies prefix list to filter route for advertisement.
          This parameter must be list that has PrefixList objects.
 
-        ``route_family`` specifies route family for out filter.
+        ``route_family`` specifies the route family for out-filter.
         This parameter must be bgpspeaker.OUT_FILTER_RF_IPv4_UC or
         bgpspeaker.OUT_FILTER_RF_IPv6_UC.
 
