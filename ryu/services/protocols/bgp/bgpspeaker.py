@@ -165,7 +165,7 @@ class PrefixList(object):
         Returns this object's policy and the result of matching.
         If the specified prefix matches this object's prefix and
         ge and le condition,
-        this method returns true as the matching result.
+        this method returns True as the matching result.
 
         ``prefix`` specifies the prefix. prefix must be string.
 
