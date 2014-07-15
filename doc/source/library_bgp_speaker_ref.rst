@@ -8,8 +8,8 @@ BGPSpeaker class
 .. autoclass:: ryu.services.protocols.bgp.bgpspeaker.BGPSpeaker
    :members:
 
-.. autoclass:: ryu.services.protocols.bgp.bgpspeaker.PrefixList
+.. autoclass:: ryu.services.protocols.bgp.bgpspeaker.EventPrefix
    :members:
 
-.. autoclass:: ryu.services.protocols.bgp.bgpspeaker.EventPrefix
+.. autoclass:: ryu.services.protocols.bgp.bgpspeaker.PrefixList
    :members:
