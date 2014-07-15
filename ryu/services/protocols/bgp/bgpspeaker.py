@@ -89,31 +89,39 @@ class EventPrefix(object):
 
 class PrefixList(object):
     """
-    PrefixList represents a prefix information that will be applied out-filter.
+    used to specify a prefix for out-filter.
+
     We can create PrefixList object as follows.
-     prefix_list = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_PERMIT)
+
+    * prefix_list = PrefixList('10.5.111.0/24',policy=PrefixList.POLICY_PERMIT)
 
     ================ ======================================================
     Attribute        Description
     ================ ======================================================
-    prefix           Prefix that applies out filter
-    policy           Policy PERMIT or DENY
-    ge               Prefix length condition that means greater or equal
-    le               Prefix length condition that means less or equal
+    prefix           A prefix used for out-filter
+    policy           PrefixList.POLICY.PERMIT or PrefixList.POLICY_DENY
+    ge               Prefix length that will be applied on out-filter.
+                     ge means greater than or equal.
+    le               Prefix length that will be applied on out-filter.
+                     le means less than or equal.
     ================ ======================================================
 
+
     For example, when PrefixList object is created as follows:
-       p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28)
-    prefix that its network matches 10.5.111.0/24 and its length matches from 26 to 28
-    is not sent to neighbor because of POLICY_DENY.
 
-    If you don't want to send prefixes 10.5.111.192/26 and 10.5.111.160/27 and 10.5.111.48/28,
-    you can specify PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28).
+    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28)
 
-    TODO: write how to use in white list manner and black list manner using 0.0.0.0/0
+    prefixes which matches 10.5.111.0/24 and its length matches from 26 to 28
+    will be filtered and stopped to send to neighbor because of POLICY_DENY.
+    If you specify POLICY_PERMIT, the path is sent to neighbor.
+
+    If you don't want to send prefixes 10.5.111.64/26 and 10.5.111.32/27
+    and 10.5.111.16/28, and allow to send other 10.5.111.0's prefixes,
+    you can do it by specifying as follows;
+
+    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28).
 
     """
-
     POLICY_DENY = 0
     POLICY_PERMIT = 1
 
@@ -129,7 +137,9 @@ class PrefixList(object):
 
     def __repr__(self):
         policy = 'PERMIT' if self._policy == self.POLICY_PERMIT else 'DENY'
-        return 'PrefixList(prefix=%s,policy=%s,ge=%s,le=%s)' % (self._prefix, policy, self._ge, self._le)
+        return 'PrefixList(prefix=%s,policy=%s,ge=%s,le=%s)' % (self._prefix,
+                                                                policy,
+                                                                self._ge, self._le)
 
     @property
     def prefix(self):
@@ -151,7 +161,7 @@ class PrefixList(object):
         result = False
         length = prefix.length
         net = IPNetwork(prefix.formatted_nlri_str)
-        #LOG.debug('evaluate prefix : %s and %s' % (self.prefix, prefix.formatted_nlri_str))
+
         if net in self._network:
             if self._ge is None and self._le is None:
                 result = True
@@ -417,26 +427,31 @@ class BGPSpeaker(object):
         show['params'] = ['rib', family]
         return call('operator.show', **show)
 
-    def out_filter_set(self, neighbor_address, prefix_lists, route_family=OUT_FILTER_RF_IPv4_UC):
+    def out_filter_set(self, neighbor_address, prefix_lists,
+                       route_family=OUT_FILTER_RF_IPv4_UC):
         """ This method sets out-filter to neighbor.
 
         ``neighbor_address`` specifies the neighbor IP address
 
-        ``prefix_lists`` specifies prefix list to filter route for advertisement. This
-        parameter must be PrefixList object.
+        ``prefix_lists`` specifies prefix list to filter route for advertisement.
+         This parameter must be PrefixList object.
 
         ``route_family`` specifies route family for out filter.
-        This parameter must be bgpspeaker.OUT_FILTER_RF_IPv4_UC or bgpspeaker.OUT_FILTER_RF_IPv6_UC.
+        This parameter must be bgpspeaker.OUT_FILTER_RF_IPv4_UC or
+        bgpspeaker.OUT_FILTER_RF_IPv6_UC.
 
         """
 
-        assert route_family in (OUT_FILTER_RF_IPv4_UC, OUT_FILTER_RF_IPv6_UC), "route family must be IPv4 or IPv6"
+        assert route_family in (OUT_FILTER_RF_IPv4_UC,
+                                OUT_FILTER_RF_IPv6_UC),\
+            "route family must be IPv4 or IPv6"
 
         if prefix_lists is None:
             prefix_lists = []
 
         func_name = 'neighbor.update'
-        prefix_value = {'prefix_lists': prefix_lists, 'route_family': route_family}
+        prefix_value = {'prefix_lists': prefix_lists,
+                        'route_family': route_family}
         filter_param = {neighbors.OUT_FILTER: prefix_value}
 
         param = {}
