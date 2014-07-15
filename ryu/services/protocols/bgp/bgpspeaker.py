@@ -111,7 +111,9 @@ class PrefixList(object):
     you can specify PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28).
 
     TODO: write how to use in white list manner and black list manner using 0.0.0.0/0
+
     """
+
     POLICY_DENY = 0
     POLICY_PERMIT = 1
 
@@ -441,7 +443,6 @@ class BGPSpeaker(object):
         param[neighbors.IP_ADDRESS] = neighbor_address
         param[neighbors.CHANGES] = filter_param
         call(func_name, **param)
-
 
     def out_filter_get(self, neighbor_address):
         """ This method gets out-filter from neighbor settings.
