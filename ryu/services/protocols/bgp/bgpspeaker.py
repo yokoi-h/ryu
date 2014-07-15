@@ -447,11 +447,11 @@ class BGPSpeaker(object):
         show['params'] = ['rib', family]
         return call('operator.show', **show)
 
-    def out_filter_set(self, neighbor_address, prefix_lists,
+    def out_filter_set(self, address, prefix_lists,
                        route_family=OUT_FILTER_RF_IPv4_UC):
         """ This method sets out-filter to neighbor.
 
-        ``neighbor_address`` specifies the neighbor IP address
+        ``address`` specifies the IP address of the peer.
 
         ``prefix_lists`` specifies prefix list to filter route for advertisement.
          This parameter must be list that has PrefixList objects.
@@ -477,7 +477,6 @@ class BGPSpeaker(object):
 
         """
 
-
         assert route_family in (OUT_FILTER_RF_IPv4_UC,
                                 OUT_FILTER_RF_IPv6_UC),\
             "route family must be IPv4 or IPv6"
@@ -491,14 +490,14 @@ class BGPSpeaker(object):
         filter_param = {neighbors.OUT_FILTER: prefix_value}
 
         param = {}
-        param[neighbors.IP_ADDRESS] = neighbor_address
+        param[neighbors.IP_ADDRESS] = address
         param[neighbors.CHANGES] = filter_param
         call(func_name, **param)
 
-    def out_filter_get(self, neighbor_address):
+    def out_filter_get(self, address):
         """ This method gets out-filter setting from the specified neighbor.
 
-        ``neighbor_address`` specifies the neighbor IP address
+        ``address`` specifies the IP address of the peer.
 
         Returns list object that has PrefixList objects.
 
@@ -506,6 +505,6 @@ class BGPSpeaker(object):
 
         func_name = 'neighbor.get'
         param = {}
-        param[neighbors.IP_ADDRESS] = neighbor_address
+        param[neighbors.IP_ADDRESS] = address
         settings = call(func_name, **param)
         return settings[OUT_FILTER]
