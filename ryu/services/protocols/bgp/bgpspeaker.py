@@ -463,14 +463,17 @@ class BGPSpeaker(object):
 
         If you want to define out-filter that send only a particular prefix to neighbor,
         prefix_lists can be created as follows;
+
           p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
+
           all = PrefixList('0.0.0.0/0', policy=PrefixList.POLICY_DENY)
 
           pList = [p, all]
 
           bgpspeaker.out_filter_set(neighbor_address, pList)
 
-        NOTE: out-filter evaluates prefixes in the order of PrefixList in the pList.
+        NOTE:
+        out-filter evaluates prefixes in the order of PrefixList in the pList.
 
         """
 
