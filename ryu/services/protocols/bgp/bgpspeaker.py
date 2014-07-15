@@ -470,7 +470,7 @@ class BGPSpeaker(object):
 
           pList = [p, all]
 
-          bgpspeaker.out_filter_set(neighbor_address, pList)
+          self.bgpspeaker.out_filter_set(neighbor_address, pList)
 
         NOTE:
         out-filter evaluates prefixes in the order of PrefixList in the pList.
