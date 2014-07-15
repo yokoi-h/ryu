@@ -93,8 +93,7 @@ class PrefixList(object):
 
     We can create PrefixList object as follows.
 
-    * prefix_list = PrefixList('10.5.111.0/24',
-                               policy=PrefixList.POLICY_PERMIT)
+    * prefix_list = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
 
     ================ ==================================================
     Attribute        Description
@@ -110,8 +109,7 @@ class PrefixList(object):
 
     For example, when PrefixList object is created as follows:
 
-    * p = PrefixList('10.5.111.0/24',
-                     policy=PrefixList.POLICY_DENY, ge=26, le=28)
+    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28)
 
     prefixes which matches 10.5.111.0/24 and its length matches
     from 26 to 28 will be filtered and stopped to send to neighbor
@@ -122,8 +120,7 @@ class PrefixList(object):
     and 10.5.111.16/28, and allow to send other 10.5.111.0's prefixes,
     you can do it by specifying as follows;
 
-    * p = PrefixList('10.5.111.0/24',
-                    policy=PrefixList.POLICY_DENY, ge=26, le=28).
+    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28).
 
     """
     POLICY_DENY = 0
@@ -163,14 +160,14 @@ class PrefixList(object):
         return self._le
 
     def evaluate(self, prefix):
-        """ This method evaluates the prefix. neighbor.
+        """ This method evaluates the prefix.
 
         Returns this object's policy and the result of matching.
         If the specified prefix matches this object's prefix and
         ge and le condition,
         this method returns true as the matching result.
 
-        ``prefix`` specifies the prefix. prefix must be string
+        ``prefix`` specifies the prefix. prefix must be string.
 
         """
 
@@ -457,13 +454,24 @@ class BGPSpeaker(object):
         ``neighbor_address`` specifies the neighbor IP address
 
         ``prefix_lists`` specifies prefix list to filter route for advertisement.
-         This parameter must be PrefixList object.
+         This parameter must be list that has PrefixList objects.
 
         ``route_family`` specifies route family for out filter.
         This parameter must be bgpspeaker.OUT_FILTER_RF_IPv4_UC or
         bgpspeaker.OUT_FILTER_RF_IPv6_UC.
 
+
+        If you want to define out-filter that send only a particular prefix to neighbor,
+        prefix_lists can be created as follows;
+          p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
+        all = PrefixList('0.0.0.0/0', policy=PrefixList.POLICY_DENY)
+        pList = [p, all]
+        bgpspeaker.out_filter_set(neighbor_address, pList)
+
+        NOTE: out-filter evaluates prefixes in the order of PrefixList in the pList.
+
         """
+
 
         assert route_family in (OUT_FILTER_RF_IPv4_UC,
                                 OUT_FILTER_RF_IPv6_UC),\
@@ -483,9 +491,11 @@ class BGPSpeaker(object):
         call(func_name, **param)
 
     def out_filter_get(self, neighbor_address):
-        """ This method gets out-filter from neighbor settings.
+        """ This method gets out-filter setting from the specified neighbor.
 
         ``neighbor_address`` specifies the neighbor IP address
+
+        Returns list object that has PrefixList objects.
 
         """
 
