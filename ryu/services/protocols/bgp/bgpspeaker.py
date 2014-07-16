@@ -60,6 +60,7 @@ from ryu.lib.packet.bgp import RF_IPv4_UC, RF_IPv6_UC
 
 OUT_FILTER_RF_IPv4_UC = RF_IPv4_UC
 OUT_FILTER_RF_IPv6_UC = RF_IPv6_UC
+PATH_ATTR_MED = 'path_attr_med'
 
 
 class EventPrefix(object):
@@ -508,3 +509,21 @@ class BGPSpeaker(object):
         param[neighbors.IP_ADDRESS] = address
         settings = call(func_name, **param)
         return settings[OUT_FILTER]
+
+    def path_attribute_change(self, address, attribute_type, attribute_value):
+        """ This method changes Path attributes.
+
+        :param attribute_type: specifies attribute which you want to change
+        :param attribute_value: specifies value for the attribute
+
+        """
+
+        assert attribute_type == PATH_ATTR_MED
+
+        func_name = 'neighbor.update'
+        attribute_param = {}
+        if attribute_type == PATH_ATTR_MED:
+            attribute_param = {neighbors.MULTI_EXIT_DISC: attribute_value}
+
+        param = {neighbors.IP_ADDRESS: address, neighbors.CHANGES: attribute_param}
+        call(func_name, **param)
