@@ -217,11 +217,16 @@ class BgpProtocol(Protocol, Activity):
 
     @property
     def negotiated_afs(self):
-        local_caps = self.sent_open_msg.caps
-        remote_caps = self.recv_open_msg.caps
+        local_caps = self.sent_open_msg.opt_param
+        remote_caps = self.recv_open_msg.opt_param
 
-        local_mbgp_cap = local_caps.get(BGP_CAP_MULTIPROTOCOL)
-        remote_mbgp_cap = remote_caps.get(BGP_CAP_MULTIPROTOCOL)
+        matches = [cap for cap in local_caps if cap.cap_code == BGP_CAP_MULTIPROTOCOL]
+        local_mbgp_cap = True if len(matches) > 0 else False
+        matches = [cap for cap in remote_caps if cap.cap_code == BGP_CAP_MULTIPROTOCOL]
+        remote_mbgp_cap = True if len(matches) > 0 else False
+
+        # local_mbgp_cap = local_caps.get(BGP_CAP_MULTIPROTOCOL)
+        # remote_mbgp_cap = remote_caps.get(BGP_CAP_MULTIPROTOCOL)
         # Check MP_BGP capabilities were advertised.
         if local_mbgp_cap and remote_mbgp_cap:
             local_families = {
