@@ -173,7 +173,8 @@ class NeighborConf(ConfWithId, ConfWithStats):
     UPDATE_MED_EVT = 'update_med_evt'
     UPDATE_OUT_FILTER_EVT = 'update_out_filter_evt'
 
-    VALID_EVT = frozenset([UPDATE_ENABLED_EVT, UPDATE_MED_EVT, UPDATE_OUT_FILTER_EVT])
+    VALID_EVT = frozenset([UPDATE_ENABLED_EVT, UPDATE_MED_EVT,
+                           UPDATE_OUT_FILTER_EVT])
     REQUIRED_SETTINGS = frozenset([REMOTE_AS, IP_ADDRESS])
     OPTIONAL_SETTINGS = frozenset([CAP_REFRESH,
                                    CAP_ENHANCED_REFRESH,
@@ -551,6 +552,7 @@ class NeighborConfListener(ConfWithIdListener, ConfWithStatsListener):
     @abstractmethod
     def on_update_out_filter(self, evt):
         raise NotImplementedError('This method should be overridden.')
+
 
 class NeighborsConfListener(BaseConfListener):
     """Base listener for change events to neighbor configuration container."""

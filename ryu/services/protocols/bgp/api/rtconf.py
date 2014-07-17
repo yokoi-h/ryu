@@ -90,10 +90,12 @@ def _update_med(neigh_ip_address, value):
     LOG.info('MED value for neigh: %s updated to %s' % (neigh_conf, value))
     return True
 
+
 def _update_outfilter(neigh_ip_address, value):
     neigh_conf = _get_neighbor_conf(neigh_ip_address)
     neigh_conf.out_filter = value
     return True
+
 
 @RegisterWithArgChecks(name='neighbor.delete',
                        req_args=[neighbors.IP_ADDRESS])

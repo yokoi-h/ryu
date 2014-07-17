@@ -644,6 +644,7 @@ class Destination(object):
 
         return result
 
+
 class Path(object):
     """Represents a way of reaching an IP destination.
 

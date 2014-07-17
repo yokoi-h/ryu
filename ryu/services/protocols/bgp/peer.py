@@ -115,6 +115,7 @@ PeerCounterNames = namedtuple(
     'fms_established_transitions'
 )
 
+
 class PeerState(object):
     """A BGP neighbor state. Think of this class as of information and stats
     container for Peer.
@@ -323,7 +324,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         self._sent_init_non_rtc_update = False
         self._init_rtc_nlri_path = []
 
-
     @property
     def remote_as(self):
         return self._neigh_conf.remote_as
@@ -447,7 +447,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         prefix_lists = event_value['prefix_lists']
         rf = event_value['route_family']
 
-        table = self._core_service.table_manager.get_global_table_by_route_family(rf)
+        table = self._core_service.\
+            table_manager.get_global_table_by_route_family(rf)
         for destination in table.itervalues():
             LOG.debug('dest : %s' % destination)
             sent_routes = destination.sent_routes_by_peer(self)
@@ -473,9 +474,11 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                     # send withdraw routes that have already been sent
                     withdraw_clone = sent_route.path.clone(for_withdrawal=True)
                     outgoing_route = OutgoingRoute(withdraw_clone)
-                    LOG.debug('send withdraw %s because of out filter' % nlri_str)
+                    LOG.debug('send withdraw %s because of out filter'
+                              % nlri_str)
                 else:
-                    outgoing_route = OutgoingRoute(sent_route.path, for_route_refresh=True)
+                    outgoing_route = OutgoingRoute(sent_route.path,
+                                                   for_route_refresh=True)
                     LOG.debug('resend path : %s' % nlri_str)
 
                 self.enque_outgoing_msg(outgoing_route)
@@ -550,7 +553,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             # Collect update statistics.
             self.state.incr(PeerCounterNames.SENT_UPDATES)
         else:
-            LOG.debug('prefix : %s is not sent by filter : %s' % (nlri, blocked_cause))
+            LOG.debug('prefix : %s is not sent by filter : %s'
+                      % (nlri, blocked_cause))
 
         # We have to create sent_route for every OutgoingRoute which is
         # not a withdraw or was for route-refresh msg.

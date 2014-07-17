@@ -93,7 +93,7 @@ class PrefixList(object):
 
     We can create PrefixList object as follows.
 
-    * prefix_list = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
+    prefix_list = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
 
     ================ ==================================================
     Attribute        Description
@@ -109,7 +109,10 @@ class PrefixList(object):
 
     For example, when PrefixList object is created as follows:
 
-    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28)
+    p = PrefixList('10.5.111.0/24',
+                   policy=PrefixList.POLICY_DENY,
+                   ge=26, le=28)
+
 
     prefixes which match 10.5.111.0/24 and its length matches
     from 26 to 28 will be filtered and stopped to send to neighbor
@@ -120,7 +123,9 @@ class PrefixList(object):
     and 10.5.111.16/28, and allow to send other 10.5.111.0's prefixes,
     you can do it by specifying as follows;
 
-    * p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_DENY, ge=26, le=28).
+    p = PrefixList('10.5.111.0/24',
+                   policy=PrefixList.POLICY_DENY,
+                   ge=26, le=28).
 
     """
     POLICY_DENY = 0
@@ -453,7 +458,8 @@ class BGPSpeaker(object):
 
         ``address`` specifies the IP address of the peer.
 
-        ``prefix_lists`` specifies prefix list to filter route for advertisement.
+        ``prefix_lists`` specifies prefix list to filter route for
+          advertisement.
          This parameter must be list that has PrefixList objects.
 
         ``route_family`` specifies the route family for out-filter.
@@ -461,8 +467,8 @@ class BGPSpeaker(object):
         bgpspeaker.OUT_FILTER_RF_IPv6_UC.
 
 
-        If you want to define out-filter that send only a particular prefix to neighbor,
-        prefix_lists can be created as follows;
+        If you want to define out-filter that send only a particular
+        prefix to neighbor, prefix_lists can be created as follows;
 
           p = PrefixList('10.5.111.0/24', policy=PrefixList.POLICY_PERMIT)
 
