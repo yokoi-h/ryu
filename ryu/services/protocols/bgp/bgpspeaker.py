@@ -332,7 +332,8 @@ class BGPSpeaker(object):
         specified. By default, the MD5 authenticaiton is disabled.
 
         ``med`` specifies multi_exit discriminator (MED) value.
-        By default, this value is 0. It must be an integer.
+        The default is None and if not specified, MED value is
+        not sent to neighbor. It must be an integer.
         """
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
