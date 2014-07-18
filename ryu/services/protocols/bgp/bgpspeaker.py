@@ -47,6 +47,7 @@ from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_IPV4
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_IPV6
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_VPNV4
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_VPNV6
+from ryu.services.protocols.bgp.rtconf.base import MULTI_EXIT_DISC
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_IPV4
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_VPNV4
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_VPNV6
@@ -303,7 +304,7 @@ class BGPSpeaker(object):
                      enable_ipv4=DEFAULT_CAP_MBGP_IPV4,
                      enable_vpnv4=DEFAULT_CAP_MBGP_VPNV4,
                      enable_vpnv6=DEFAULT_CAP_MBGP_VPNV6,
-                     next_hop=None, password=None):
+                     next_hop=None, password=None, med=None):
         """ This method registers a new neighbor. The BGP speaker tries to
         establish a bgp session with the peer (accepts a connection
         from the peer and also tries to connect to it).
@@ -329,6 +330,9 @@ class BGPSpeaker(object):
 
         ``password`` is used for the MD5 authentication if it's
         specified. By default, the MD5 authenticaiton is disabled.
+
+        ``med`` specifies multi_exit discriminator (MED) value.
+        By default, this value is 0. It must be an integer.
         """
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
@@ -349,6 +353,10 @@ class BGPSpeaker(object):
         else:
             # FIXME: should raise an exception
             pass
+        #set MED to neighbor configuration
+        if med:
+            bgp_neighbor[MULTI_EXIT_DISC] = med
+
         call('neighbor.create', **bgp_neighbor)
 
     def neighbor_del(self, address):
