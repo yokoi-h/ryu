@@ -60,6 +60,7 @@ from ryu.lib.packet.bgp import RF_IPv4_UC, RF_IPv6_UC
 
 OUT_FILTER_RF_IPv4_UC = RF_IPv4_UC
 OUT_FILTER_RF_IPv6_UC = RF_IPv6_UC
+NEIGHBOR_CONF_MED = 'multi_exit_disc'
 
 
 class EventPrefix(object):
@@ -361,6 +362,25 @@ class BGPSpeaker(object):
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
         call('neighbor.delete', **bgp_neighbor)
+
+    def neighbor_update(self, address, conf_type, conf_value):
+        """ This method changes neighbor configuration.
+
+        ``conf_type`` specifies configuration type which you want to change
+        ``conf_value`` specifies value for the configuration
+
+        """
+
+        assert conf_type == NEIGHBOR_CONF_MED
+
+        func_name = 'neighbor.update'
+        attribute_param = {}
+        if conf_type == NEIGHBOR_CONF_MED:
+            attribute_param = {neighbors.MULTI_EXIT_DISC: conf_value}
+
+        param = {neighbors.IP_ADDRESS: address,
+                 neighbors.CHANGES: attribute_param}
+        call(func_name, **param)
 
     def prefix_add(self, prefix, next_hop=None, route_dist=None,
                    route_family=None):
