@@ -1156,6 +1156,12 @@ class _OptParamCapability(_OptParam, _TypeDisp):
                       self.cap_length)
         return buf + cap_value
 
+    def __cmp__(self, other):
+        return cmp(self.__repr__(), other.__repr__())
+
+    def __hash__(self):
+        return hash(self.__repr__())
+    
 
 class _OptParamEmptyCapability(_OptParamCapability):
     @classmethod
