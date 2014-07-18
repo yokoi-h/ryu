@@ -173,21 +173,12 @@ class BgpProtocol(Protocol, Activity):
         if not self.recv_open_msg:
             raise ValueError('Did not yet receive peers open message.')
 
-        err_cap_enabled = False
-        local_caps = self.sent_open_msg.opt_param
-        peer_caps = self.recv_open_msg.opt_param
+        for cap in set(self.sent_open_msg.opt_param) \
+                & set(self.recv_open_msg.opt_param):
+            if cap.cap_code == BGP_CAP_ENHANCED_ROUTE_REFRESH:
+                return True
 
-        local_cap = [cap for cap in local_caps
-                     if cap.cap_code == BGP_CAP_ENHANCED_ROUTE_REFRESH]
-        peer_cap = [cap for cap in peer_caps
-                    if cap.cap_code == BGP_CAP_ENHANCED_ROUTE_REFRESH]
-
-        # Both local and peer should advertise ERR capability for it to be
-        # enabled.
-        if local_cap and peer_cap:
-            err_cap_enabled = True
-
-        return err_cap_enabled
+        return False
 
     def _check_route_fmly_adv(self, open_msg, route_family):
         match_found = False
