@@ -47,6 +47,7 @@ from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_IPV4
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_IPV6
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_VPNV4
 from ryu.services.protocols.bgp.rtconf.base import CAP_MBGP_VPNV6
+from ryu.services.protocols.bgp.rtconf.base import MULTI_EXIT_DISC
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_IPV4
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_VPNV4
 from ryu.services.protocols.bgp.rtconf.neighbors import DEFAULT_CAP_MBGP_VPNV6
@@ -60,6 +61,7 @@ from ryu.lib.packet.bgp import RF_IPv4_UC, RF_IPv6_UC
 
 OUT_FILTER_RF_IPv4_UC = RF_IPv4_UC
 OUT_FILTER_RF_IPv6_UC = RF_IPv6_UC
+NEIGHBOR_CONF_MED = 'multi_exit_disc'
 
 
 class EventPrefix(object):
@@ -302,7 +304,7 @@ class BGPSpeaker(object):
                      enable_ipv4=DEFAULT_CAP_MBGP_IPV4,
                      enable_vpnv4=DEFAULT_CAP_MBGP_VPNV4,
                      enable_vpnv6=DEFAULT_CAP_MBGP_VPNV6,
-                     next_hop=None, password=None):
+                     next_hop=None, password=None, med=None):
         """ This method registers a new neighbor. The BGP speaker tries to
         establish a bgp session with the peer (accepts a connection
         from the peer and also tries to connect to it).
@@ -328,6 +330,10 @@ class BGPSpeaker(object):
 
         ``password`` is used for the MD5 authentication if it's
         specified. By default, the MD5 authenticaiton is disabled.
+
+        ``med`` specifies multi_exit discriminator (MED) value.
+        The default is None and if not specified, MED value is
+        not sent to neighbor. It must be an integer.
         """
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
@@ -348,6 +354,10 @@ class BGPSpeaker(object):
         else:
             # FIXME: should raise an exception
             pass
+        # set MED to neighbor configuration
+        if med:
+            bgp_neighbor[MULTI_EXIT_DISC] = med
+
         call('neighbor.create', **bgp_neighbor)
 
     def neighbor_del(self, address):
@@ -361,6 +371,25 @@ class BGPSpeaker(object):
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
         call('neighbor.delete', **bgp_neighbor)
+
+    def neighbor_update(self, address, conf_type, conf_value):
+        """ This method changes neighbor configuration.
+
+        ``conf_type`` specifies configuration type which you want to change
+        ``conf_value`` specifies value for the configuration
+
+        """
+
+        assert conf_type == NEIGHBOR_CONF_MED
+
+        func_name = 'neighbor.update'
+        attribute_param = {}
+        if conf_type == NEIGHBOR_CONF_MED:
+            attribute_param = {neighbors.MULTI_EXIT_DISC: conf_value}
+
+        param = {neighbors.IP_ADDRESS: address,
+                 neighbors.CHANGES: attribute_param}
+        call(func_name, **param)
 
     def prefix_add(self, prefix, next_hop=None, route_dist=None,
                    route_family=None):
