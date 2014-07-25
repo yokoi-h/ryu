@@ -461,6 +461,7 @@ class BGPSpeaker(object):
         vrf[vrfs.ROUTE_DISTINGUISHER] = route_dist
         vrf[vrfs.IMPORT_RTS] = import_rts
         vrf[vrfs.EXPORT_RTS] = export_rts
+        vrf[vrfs.SITE_OF_ORIGINS] = site_of_origins
         call('vrf.create', **vrf)
 
     def vrf_del(self, route_dist):
