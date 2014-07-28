@@ -1822,12 +1822,22 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
     def serialize_value(self):
         # fixup
         self.next_hop_len = len(self._next_hop_bin)
+
+        if RouteFamily(afi, safi) in (RF_IPv4_VPN, RF_IPv6_VPN):
+            empty_label_stack = '\0' * 8
+            next_hop_len = len(self._next_hop_bin) + len(empty_label_stack)
+            next_hop_bin = empty_label_stack
+            next_hop_bin += self._next_hop_bin
+        else:
+            next_hop_len = self.next_hop_len
+            next_hop_bin = self._next_hop_bin
+
         self.reserved = '\0'
 
         buf = bytearray()
         msg_pack_into(self._VALUE_PACK_STR, buf, 0, self.afi,
-                      self.safi, self.next_hop_len)
-        buf += self._next_hop_bin
+                      self.safi, next_hop_len)
+        buf += next_hop_bin
         buf += self.reserved
         binnlri = bytearray()
         for n in self.nlri:
