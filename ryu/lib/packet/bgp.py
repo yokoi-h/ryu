@@ -1823,7 +1823,7 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
         # fixup
         self.next_hop_len = len(self._next_hop_bin)
 
-        if RouteFamily(afi, safi) in (RF_IPv4_VPN, RF_IPv6_VPN):
+        if RouteFamily(self.afi, self.safi) in (RF_IPv4_VPN, RF_IPv6_VPN):
             empty_label_stack = '\0' * 8
             next_hop_len = len(self._next_hop_bin) + len(empty_label_stack)
             next_hop_bin = empty_label_stack
