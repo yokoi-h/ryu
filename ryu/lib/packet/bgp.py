@@ -1771,6 +1771,7 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
     _VALUE_PACK_STR = '!HBB'  # afi, safi, next hop len
     _ATTR_FLAGS = BGP_ATTR_FLAG_OPTIONAL
     _class_prefixes = ['_BinAddrPrefix']
+    _empty_label_len = 8
 
     def __init__(self, afi, safi, next_hop, nlri,
                  next_hop_len=0, reserved='\0',
@@ -1806,8 +1807,14 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
         while binnlri:
             n, binnlri = addr_cls.parser(binnlri)
             nlri.append(n)
-        if RouteFamily(afi, safi) in (RF_IPv6_UC, RF_IPv6_VPN):
+
+        rf = RouteFamily(afi, safi)
+        if rf == RF_IPv6_UC:
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin)
+        elif rf == RF_IPv6_VPN:
+            next_hop = addrconv.ipv6.bin_to_text(next_hop_bin[cls._empty_label_len:])
+        elif rf == RF_IPv4_VPN:
+            next_hop = addrconv.ipv4.bin_to_text(next_hop_bin[cls._empty_label_len:])
         else:
             next_hop = addrconv.ipv4.bin_to_text(next_hop_bin)
         return {
@@ -1824,7 +1831,7 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
         self.next_hop_len = len(self._next_hop_bin)
 
         if RouteFamily(self.afi, self.safi) in (RF_IPv4_VPN, RF_IPv6_VPN):
-            empty_label_stack = '\0' * 8
+            empty_label_stack = '\x00' * self._empty_label_len
             next_hop_len = len(self._next_hop_bin) + len(empty_label_stack)
             next_hop_bin = empty_label_stack
             next_hop_bin += self._next_hop_bin
