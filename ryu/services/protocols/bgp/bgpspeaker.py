@@ -27,6 +27,7 @@ from ryu.services.protocols.bgp.api.base import call
 from ryu.services.protocols.bgp.api.base import PREFIX
 from ryu.services.protocols.bgp.api.base import NEXT_HOP
 from ryu.services.protocols.bgp.api.base import ROUTE_DISTINGUISHER
+from ryu.services.protocols.bgp.api.base import ROUTE_FAMILY
 from ryu.services.protocols.bgp.rtconf.common import LOCAL_AS
 from ryu.services.protocols.bgp.rtconf.common import ROUTER_ID
 from ryu.services.protocols.bgp.rtconf.common import BGP_SERVER_PORT
@@ -424,6 +425,7 @@ class BGPSpeaker(object):
         if route_dist:
             func_name = 'prefix.add_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
+            networks[ROUTE_FAMILY] = route_family
         call(func_name, **networks)
 
     def prefix_del(self, prefix, route_dist=None, route_family=None):
