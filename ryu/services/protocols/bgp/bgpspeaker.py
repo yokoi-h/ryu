@@ -27,6 +27,7 @@ from ryu.services.protocols.bgp.api.base import call
 from ryu.services.protocols.bgp.api.base import PREFIX
 from ryu.services.protocols.bgp.api.base import NEXT_HOP
 from ryu.services.protocols.bgp.api.base import ROUTE_DISTINGUISHER
+from ryu.services.protocols.bgp.api.base import ROUTE_FAMILY
 from ryu.services.protocols.bgp.rtconf.common import LOCAL_AS
 from ryu.services.protocols.bgp.rtconf.common import ROUTER_ID
 from ryu.services.protocols.bgp.rtconf.common import BGP_SERVER_PORT
@@ -308,6 +309,7 @@ class BGPSpeaker(object):
         if route_dist:
             func_name = 'prefix.add_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
+            networks[ROUTE_FAMILY] = route_family
         call(func_name, **networks)
 
     def prefix_del(self, prefix, route_dist=None, route_family=None):
@@ -330,7 +332,7 @@ class BGPSpeaker(object):
         call(func_name, **networks)
 
     def vrf_add(self, route_dist, import_rts, export_rts, site_of_origins=None,
-                multi_exit_disc=None):
+                multi_exit_disc=None, route_family=None):
         """ This method adds a new vrf used for VPN.
 
         ``route_dist`` specifies a route distinguisher value.
@@ -349,6 +351,8 @@ class BGPSpeaker(object):
         vrf[vrfs.IMPORT_RTS] = import_rts
         vrf[vrfs.EXPORT_RTS] = export_rts
         vrf[vrfs.SITE_OF_ORIGINS] = site_of_origins
+        if route_family:
+            vrf[vrfs.VRF_RF] = route_family
         call('vrf.create', **vrf)
 
     def vrf_del(self, route_dist):
