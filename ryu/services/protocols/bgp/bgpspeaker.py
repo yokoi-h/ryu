@@ -426,7 +426,7 @@ class BGPSpeaker(object):
             networks[ROUTE_DISTINGUISHER] = route_dist
             networks[ROUTE_FAMILY] = route_family
             if route_family == vrfs.VRF_RF_IPV6:
-                networks[NEXT_HOP] = IPAddress(next_hop).ipv6()
+                networks[NEXT_HOP] = str(IPAddress(next_hop).ipv6())
         call(func_name, **networks)
 
     def prefix_del(self, prefix, route_dist=None, route_family=None):
