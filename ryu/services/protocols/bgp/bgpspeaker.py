@@ -448,7 +448,7 @@ class BGPSpeaker(object):
         call(func_name, **networks)
 
     def vrf_add(self, route_dist, import_rts, export_rts, site_of_origins=None,
-                multi_exit_disc=None):
+                multi_exit_disc=None, route_family=None):
         """ This method adds a new vrf used for VPN.
 
         ``route_dist`` specifies a route distinguisher value.
@@ -464,6 +464,8 @@ class BGPSpeaker(object):
         vrf[vrfs.IMPORT_RTS] = import_rts
         vrf[vrfs.EXPORT_RTS] = export_rts
         vrf[vrfs.SITE_OF_ORIGINS] = site_of_origins
+        if route_family:
+            vrf[vrfs.VRF_RF] = route_family
         call('vrf.create', **vrf)
 
     def vrf_del(self, route_dist):
