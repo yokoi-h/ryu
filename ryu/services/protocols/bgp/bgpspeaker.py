@@ -60,7 +60,6 @@ from ryu.services.protocols.bgp.application import RyuBGPSpeaker
 from netaddr.ip import IPAddress, IPNetwork
 from ryu.lib.packet.bgp import RF_IPv4_UC, RF_IPv6_UC
 
-
 OUT_FILTER_RF_IPv4_UC = RF_IPv4_UC
 OUT_FILTER_RF_IPv6_UC = RF_IPv6_UC
 NEIGHBOR_CONF_MED = 'multi_exit_disc'
@@ -426,6 +425,8 @@ class BGPSpeaker(object):
             func_name = 'prefix.add_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
             networks[ROUTE_FAMILY] = route_family
+            if route_family == vrfs.VRF_RF_IPV6:
+                networks[NEXT_HOP] = IPAddress(next_hop).ipv6()
         call(func_name, **networks)
 
     def prefix_del(self, prefix, route_dist=None, route_family=None):
