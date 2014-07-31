@@ -1813,8 +1813,10 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin)
         elif rf == RF_IPv6_VPN:
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin[cls._rd_length:])
+            next_hop_len -= cls._rd_length
         elif rf == RF_IPv4_VPN:
             next_hop = addrconv.ipv4.bin_to_text(next_hop_bin[cls._rd_length:])
+            next_hop_len -= cls._rd_length
         else:
             next_hop = addrconv.ipv4.bin_to_text(next_hop_bin)
         return {
