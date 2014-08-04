@@ -461,12 +461,15 @@ class VrfsConf(BaseConf):
             if route_dist is not None:
                 print '----------------------------------------------------------------'
                 print 'route_family : %s' % route_family
-                print '----------------------------------------------------------------'
+
                 rd_rf_id = VrfConf.create_rd_rf_id(route_dist, route_family)
+                print 'rd_rf_id : %s' % rd_rf_id
                 vrf_conf = self._vrfs_by_rd_rf.pop(rd_rf_id, None)
+                print 'vrf_conf : %s' % vrf_conf
                 if vrf_conf:
                     self._vrfs_by_id.pop(vrf_conf.id, None)
                     removed_vrf_confs.append(vrf_conf)
+                print '----------------------------------------------------------------'
             else:
                 vrf_conf = self._vrfs_by_id.pop(vrf_id, None)
                 if vrf_conf:
