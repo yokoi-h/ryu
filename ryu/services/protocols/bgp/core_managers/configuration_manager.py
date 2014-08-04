@@ -56,6 +56,7 @@ class ConfigurationManager(CommonConfListener, VrfsConfListener,
 
         # We have to withdraw paths that do not have any RT that are or
         # interest
+        print 'on_chg_vrf_conf vrf_conf : %s' % vrf_conf
         vrf_table.clean_uninteresting_paths()
         if import_maps is not None:
             vrf_table.init_import_maps(import_maps)
