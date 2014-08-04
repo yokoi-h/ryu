@@ -644,6 +644,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 self.outgoing_msg_event.wait()
                 continue
 
+            LOG.debug('----outgoing_msg : %s' % outgoing_msg)
+
             # Check currently supported out-going msgs.
             assert isinstance(
                 outgoing_msg,
