@@ -30,8 +30,9 @@ from ryu.services.protocols.bgp.core import BgpCoreError
 from ryu.services.protocols.bgp.core_manager import CORE_MANAGER
 from ryu.services.protocols.bgp.rtconf.base import RuntimeConfigError
 from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF
-from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4
+from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4, VRF_RF_IPV6
 from ryu.services.protocols.bgp.utils import validation
+from netaddr import IPAddress
 
 
 LOG = logging.getLogger('bgpspeaker.api.prefix')
@@ -65,6 +66,10 @@ def add_local(route_dist, prefix, next_hop, route_family=VRF_RF_IPV4):
     try:
         # Create new path and insert into appropriate VRF table.
         tm = CORE_MANAGER.get_core_service().table_manager
+        #
+        if route_family == VRF_RF_IPV6:
+            next_hop = str(IPAddress(next_hop).ipv6())
+        print next_hop
         label = tm.add_to_vrf(route_dist, prefix, next_hop, route_family)
         # Currently we only allocate one label per local_prefix,
         # so we share first label from the list.
