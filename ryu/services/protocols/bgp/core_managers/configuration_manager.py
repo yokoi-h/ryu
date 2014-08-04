@@ -84,6 +84,7 @@ class ConfigurationManager(CommonConfListener, VrfsConfListener,
 
         Cleans up other links to this table as well.
         """
+        LOG.debug('on_remove_vrf_conf')
         vrf_conf = evt.value
         # Detach VrfConf change listener.
         vrf_conf.remove_listener(VrfConf.VRF_CHG_EVT, self.on_chg_vrf_conf)

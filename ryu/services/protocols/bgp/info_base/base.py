@@ -91,14 +91,17 @@ class Table(object):
         return updated_dest
 
     def insert_sent_route(self, sent_route):
+        LOG.debug('insert_sent_route path: %s' % sent_route.path)
         self._validate_path(sent_route.path)
         dest = self._get_or_create_dest(sent_route.path.nlri)
+        LOG.debug('insert_sent_route dest: %s' % dest)
         dest.add_sent_route(sent_route)
 
     def _insert_path(self, path):
         """Add new path to destination identified by given prefix.
         """
         assert path.is_withdraw is False
+        LOG.debug('_insert_path path: %s' % path)
         dest = self._get_or_create_dest(path.nlri)
         # Add given path to matching Dest.
         dest.add_new_path(path)
@@ -151,6 +154,7 @@ class Table(object):
             LOG.debug('dest %s' % dest)
             added_withdraw = \
                 dest.withdraw_unintresting_paths(interested_rts)
+            LOG.debug('added_withdraw : %s' % added_withdraw)
             if added_withdraw:
                 self._signal_bus.dest_changed(dest)
                 uninteresting_dest_count += 1
@@ -169,7 +173,9 @@ class Table(object):
         return dest
 
     def delete_dest(self, dest):
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
         del self._destinations[self._table_key(dest.nlri)]
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
 
     def _validate_nlri(self, nlri):
         """Validated *nlri* is the type that this table stores/supports.
@@ -187,17 +193,26 @@ class Table(object):
                              ' Vpnv4 route family path, got %s.' % path)
 
     def _get_or_create_dest(self, nlri):
+        LOG.debug('_get_or_create_dest nlri : %s' % nlri)
         table_key = self._table_key(nlri)
+        LOG.debug('_get_or_create_dest table_key : %s' % table_key)
+        LOG.debug('self._get_or_create_dest self._destinations : %s' % self._destinations)
         dest = self._destinations.get(table_key)
         # If destination for given prefix does not exist we create it.
         if dest is None:
             dest = self._create_dest(nlri)
+            LOG.debug('_get_or_create_dest destination was not found')
             self._destinations[table_key] = dest
+        else:
+            LOG.debug('_get_or_create_dest destination was found')
+        LOG.debug('_get_or_create_dest sent_routes : %s' % dest._sent_routes)
+        LOG.debug('_get_or_create_dest result dest : %s' % dest)
         return dest
 
     def _get_dest(self, nlri):
         table_key = self._table_key(nlri)
         dest = self._destinations.get(table_key)
+        LOG.debug('_get_dest sent_routes : %s' % dest._sent_routes)
         return dest
 
     def is_for_vrf(self):
@@ -227,12 +242,16 @@ class NonVrfPathProcessingMixin(object):
     def _best_path_lost(self):
         self._best_path = None
 
+        LOG.debug('enter _best_path_lost')
+        LOG.debug('_best_path_lost self : %s' % self)
         if self._sent_routes:
             # We have to send update-withdraw to all peers to whom old best
             # path was sent.
             for sent_route in self._sent_routes.values():
+                LOG.debug('_best_path_lost sent_route: %s' % sent_route)
                 sent_path = sent_route.path
                 withdraw_clone = sent_path.clone(for_withdrawal=True)
+                LOG.debug('_best_path_lost withdraw_clone: %s' % withdraw_clone)
                 outgoing_route = OutgoingRoute(withdraw_clone)
                 sent_route.sent_peer.enque_outgoing_msg(outgoing_route)
                 LOG.debug('Sending withdrawal to %s for %s' %
@@ -241,6 +260,10 @@ class NonVrfPathProcessingMixin(object):
             # Have to clear sent_route list for this destination as
             # best path is removed.
             self._sent_routes = {}
+        else:
+            LOG.debug('else _best_path_lost')
+            LOG.debug(self._sent_routes)
+
 
     def _new_best_path(self, new_best_path):
         old_best_path = self._best_path
@@ -258,6 +281,7 @@ class NonVrfPathProcessingMixin(object):
         # bgp-peers.
         pm = self._core_service.peer_manager
         pm.comm_new_best_to_bgp_peers(new_best_path)
+        LOG.debug('sent_routes : %s' % self._sent_routes)
 
 
 class Destination(object):
@@ -311,6 +335,7 @@ class Destination(object):
         # On work queue for BGP processor.
         # self.next_dest_to_process
         # self.prev_dest_to_process
+        self._memo = ''
 
     @property
     def route_family(self):
@@ -337,23 +362,37 @@ class Destination(object):
         return self._sent_routes.values()
 
     def add_new_path(self, new_path):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._validate_path(new_path)
         self._new_path_list.append(new_path)
 
     def add_withdraw(self, withdraw):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._validate_path(withdraw)
         self._withdraw_list.append(withdraw)
 
     def add_sent_route(self, sent_route):
+        LOG.debug('add_sent_route sent_route: %s' % sent_route)
+        LOG.debug('sent_route.sent_peer : %s' % sent_route.sent_peer)
+        LOG.debug('sent_route.path : %s' % sent_route.path)
+        LOG.debug('add_sent_route self : %s' % self)
         self._sent_routes[sent_route.sent_peer] = sent_route
+        LOG.debug('add_sent_route _sent_routes : %s' % self._sent_routes)
+        if sent_route.path.nexthop == '::ffff:172.16.6.102' or sent_route.path.nexthop == '172.16.6.102':
+            self._memo = 'VpnV6Table'
+        LOG.debug('sent_route.path.next_hop : %s' % sent_route.path.nexthop)
+        LOG.debug('add_sent_route memo : %s' % self._memo)
 
     def remove_sent_route(self, peer):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
+        LOG.debug('remove_sent_route peer : %s' % peer)
         if self.was_sent_to(peer):
             del self._sent_routes[peer]
             return True
         return False
 
     def was_sent_to(self, peer):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         if peer in self._sent_routes.keys():
             return True
         return False
@@ -368,14 +407,20 @@ class Destination(object):
         choose new best-path. Communicates best-path to core service.
         """
         LOG.debug('Processing destination: %s', self)
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         new_best_path, reason = self._process_paths()
         self._best_path_reason = reason
 
         if self._best_path == new_best_path:
             return
 
+
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         if new_best_path is None:
             # we lost best path
+            LOG.debug('Destination kick _best_path_lost : %s' % self._sent_routes)
+            LOG.debug('Destination kick table : %s' % self._table)
+            LOG.debug('_process memo : %s' % self._memo)
             assert not self._known_path_list, repr(self._known_path_list)
             return self._best_path_lost()
         else:
@@ -398,11 +443,13 @@ class Destination(object):
             )
 
     def process(self):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._process()
         if not self._known_path_list and not self._best_path:
             self._remove_dest_from_table()
 
     def _remove_dest_from_table(self):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._table.delete_dest(self)
 
     def remove_old_paths_from_source(self, source):
@@ -434,6 +481,9 @@ class Destination(object):
         Parameter:
             - `peer`: (Peer) peer to send withdraw to
         """
+
+        LOG.debug('withdraw_if_sent_to peer: %s', peer)
+
         from ryu.services.protocols.bgp.peer import Peer
         if not isinstance(peer, Peer):
             raise TypeError('Currently we only support sending withdrawal'

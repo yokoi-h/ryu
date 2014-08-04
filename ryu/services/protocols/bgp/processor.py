@@ -111,6 +111,8 @@ class BgpProcessor(Activity):
             # We process the first destination in the queue.
             next_dest = self._dest_queue.pop_first()
             if next_dest:
+                LOG.debug('_process_dest sent_routes : %s' % next_dest._sent_routes)
+                LOG.debug('_process_dest next_dest : %s' % next_dest)
                 next_dest.process()
                 dest_processed += 1
 
@@ -139,16 +141,22 @@ class BgpProcessor(Activity):
         if not destination:
             raise BgpProcessorError('Invalid destination %s.' % destination)
 
+
+
         dest_queue = self._dest_queue
         # RtDest are queued in a separate queue
         if destination.route_family == RF_RTC_UC:
             dest_queue = self._rtdest_queue
 
+        LOG.debug('enqueue destination : %s' % destination)
+        LOG.debug('enqueue destination._sent_routes : %s' % destination._sent_routes)
+
         # We do not add given destination to the queue for processing if
         # it is already on the queue.
         if not dest_queue.is_on_list(destination):
             dest_queue.append(destination)
-
+        else:
+            LOG.debug('do not enqueue...')
         # Wake-up processing thread if sleeping.
         self.dest_que_evt.set()
 

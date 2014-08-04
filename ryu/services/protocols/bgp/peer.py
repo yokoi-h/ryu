@@ -607,6 +607,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         block, blocked_cause = self._apply_out_filter(path)
 
         nlri_str = outgoing_route.path.nlri.formatted_nlri_str
+        LOG.debug('_send_outgoing_route outgoing_route.path : %s' % outgoing_route.path)
         sent_route = SentRoute(outgoing_route.path, self, block)
         self._adj_rib_out[nlri_str] = sent_route
         self._signal_bus.adj_rib_out_changed(self, sent_route)
@@ -615,7 +616,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # Construct and send update message.
         if not block:
             update_msg = self._construct_update(outgoing_route)
+            LOG.debug('_send_outgoing_route update_msg: %s' % update_msg)
             self._protocol.send(update_msg)
+            LOG.debug('_send_outgoing_route after update_msg: %s' % update_msg)
             # Collect update statistics.
             self.state.incr(PeerCounterNames.SENT_UPDATES)
         else:
@@ -626,9 +629,12 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # not a withdraw or was for route-refresh msg.
         if (not outgoing_route.path.is_withdraw and
                 not outgoing_route.for_route_refresh):
+            LOG.debug('_send_outgoing_route path: %s' % path)
             # Update the destination with new sent route.
             tm = self._core_service.table_manager
             tm.remember_sent_route(sent_route)
+        else:
+            LOG.debug('else _send_outgoing_route path: %s' % path)
 
     def _process_outgoing_msg_list(self):
         while True:
@@ -643,6 +649,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 self.outgoing_msg_event.clear()
                 self.outgoing_msg_event.wait()
                 continue
+
+            LOG.debug('----outgoing_msg : %s' % outgoing_msg)
 
             # Check currently supported out-going msgs.
             assert isinstance(
@@ -746,6 +754,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         """Construct update message with Outgoing-routes path attribute
         appropriately cloned/copied/updated.
         """
+
+        LOG.debug('_construct_update begin outgoing_route.path: %s' % outgoing_route.path)
+
         update = None
         path = outgoing_route.path
         # Get copy of path's path attributes.
@@ -923,6 +934,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                                nlri=nlri_list)
         else:
             update = BGPUpdate(path_attributes=new_pathattr)
+
+        LOG.debug('_construct_update end outgoing_route.path: %s' % outgoing_route.path)
         return update
 
     def _connect_loop(self, client_factory):

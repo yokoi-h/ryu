@@ -377,21 +377,25 @@ class BgpProtocol(Protocol, Activity):
         self._socket.close()
 
     def _send_with_lock(self, msg):
+        LOG.debug('_send_with_lock 1 msg: %s' % msg)
         self._sendlock.acquire()
         try:
+            LOG.debug('_send_with_lock 2 msg: %s' % msg)
             self._socket.sendall(msg.serialize())
+            LOG.debug('_send_with_lock 3 msg: %s' % msg)
         except socket.error as err:
             self.connection_lost('failed to write to socket')
         finally:
             self._sendlock.release()
 
     def send(self, msg):
+        LOG.debug('send 1 msg: %s' % msg)
         if not self.started:
             raise BgpProtocolException('Tried to send message to peer when '
                                        'this protocol instance is not started'
                                        ' or is no longer is started state.')
         self._send_with_lock(msg)
-
+        LOG.debug('send 2 msg: %s' % msg)
         if msg.type == BGP_MSG_NOTIFICATION:
             LOG.error('Sent notification to %s >> %s' %
                       (self._remotename, msg))
