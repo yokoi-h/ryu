@@ -231,8 +231,10 @@ class NonVrfPathProcessingMixin(object):
             # We have to send update-withdraw to all peers to whom old best
             # path was sent.
             for sent_route in self._sent_routes.values():
+                LOG.debug('_best_path_lost sent_route: %s' % sent_route)
                 sent_path = sent_route.path
                 withdraw_clone = sent_path.clone(for_withdrawal=True)
+                LOG.debug('_best_path_lost withdraw_clone: %s' % withdraw_clone)
                 outgoing_route = OutgoingRoute(withdraw_clone)
                 sent_route.sent_peer.enque_outgoing_msg(outgoing_route)
                 LOG.debug('Sending withdrawal to %s for %s' %
