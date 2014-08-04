@@ -87,6 +87,8 @@ class TableCoreManager(object):
         # exported to VPN table.
         for destination in vrf_table.itervalues():
             best_path = destination.best_path
+            LOG.debug('remove_vrf_by_vrf_conf')
+            LOG.debug('remove_vrf_by_vrf_conf best_path: %s' % best_path)
             if best_path and best_path.source is None:
                 vpn_clone = best_path.clone_to_vpn(vrf_conf.route_dist,
                                                    for_withdrawal=True)
@@ -123,6 +125,7 @@ class TableCoreManager(object):
         """
         # Get VPN/Global table
         table = self.get_global_table_by_route_family(path.route_family)
+        LOG.debug('learn_path %s' % table)
         gpath_dest = table.insert(path)
         # Since destination was updated, we enqueue it for processing.
         self._signal_bus.dest_changed(gpath_dest)
