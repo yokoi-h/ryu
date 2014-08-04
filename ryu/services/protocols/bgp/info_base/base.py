@@ -349,6 +349,7 @@ class Destination(object):
         self._withdraw_list.append(withdraw)
 
     def add_sent_route(self, sent_route):
+        LOG.debug('add_sent_route sent_route: %s' % sent_route)
         self._sent_routes[sent_route.sent_peer] = sent_route
 
     def remove_sent_route(self, peer):
