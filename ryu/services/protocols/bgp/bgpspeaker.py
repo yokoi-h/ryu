@@ -288,7 +288,7 @@ class BGPSpeaker(object):
         call(func_name, **param)
 
     def prefix_add(self, prefix, next_hop=None, route_dist=None,
-                   route_family=None):
+                   route_family=RF_VPN_V4):
         """ This method adds a new prefix to be advertized.
 
         ``prefix`` must be the string representation of an IP network
@@ -303,12 +303,10 @@ class BGPSpeaker(object):
         families.
 
         ``route_family`` specifies route family of the route_dist.
-        This parameter must be RF_VPN_V4 or RF_VPN_V6.
+        This parameter is necessary for only VPNv4 and VPNv6 address
+        families and must be RF_VPN_V4 or RF_VPN_V6.
 
         """
-
-        assert route_family in (None, RF_VPN_V4, RF_VPN_V6),\
-            'route_family must be RF_VPN_V4 or RF_VPN_V6'
 
         func_name = 'network.add'
         networks = {}
@@ -318,6 +316,10 @@ class BGPSpeaker(object):
         if route_dist:
             func_name = 'prefix.add_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
+
+            assert route_family in (RF_VPN_V4, RF_VPN_V6),\
+                'route_family must be RF_VPN_V4 or RF_VPN_V6'
+
             if route_family:
                 networks[ROUTE_FAMILY] = route_family
         call(func_name, **networks)

@@ -66,10 +66,9 @@ def add_local(route_dist, prefix, next_hop, route_family=VRF_RF_IPV4):
     try:
         # Create new path and insert into appropriate VRF table.
         tm = CORE_MANAGER.get_core_service().table_manager
-        #
+        # Convert IPv4 next_hop address to IPv4-Mapped IPv6 Address.
         if route_family == VRF_RF_IPV6:
             next_hop = str(IPAddress(next_hop).ipv6())
-        print next_hop
         label = tm.add_to_vrf(route_dist, prefix, next_hop, route_family)
         # Currently we only allocate one label per local_prefix,
         # so we share first label from the list.

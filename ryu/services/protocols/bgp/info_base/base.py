@@ -144,7 +144,11 @@ class Table(object):
         LOG.debug('Cleaning table %s for given interested RTs %s' %
                   (self, interested_rts))
         uninteresting_dest_count = 0
+
+        LOG.debug('interested_rts %s' % interested_rts)
+
         for dest in self.itervalues():
+            LOG.debug('dest %s' % dest)
             added_withdraw = \
                 dest.withdraw_unintresting_paths(interested_rts)
             if added_withdraw:
@@ -603,6 +607,7 @@ class Destination(object):
         """
         add_withdraws = False
         for path in self._known_path_list:
+            LOG.debug('withdraw_unintresting_paths path: %s' % path)
             if not path.has_rts_in(interested_rts):
                 self.withdraw_path(path)
                 add_withdraws = True
