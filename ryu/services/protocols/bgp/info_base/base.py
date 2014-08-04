@@ -227,6 +227,8 @@ class NonVrfPathProcessingMixin(object):
     def _best_path_lost(self):
         self._best_path = None
 
+        LOG.debug('enter _best_path_lost')
+
         if self._sent_routes:
             # We have to send update-withdraw to all peers to whom old best
             # path was sent.
