@@ -463,7 +463,7 @@ class VrfsConf(BaseConf):
                 print 'route_family : %s' % route_family
 
                 rd_rf_id = VrfConf.create_rd_rf_id(route_dist, route_family)
-                print 'rd_rf_id : %s' % rd_rf_id
+                print rd_rf_id
                 vrf_conf = self._vrfs_by_rd_rf.pop(rd_rf_id, None)
                 print 'vrf_conf : %s' % vrf_conf
                 if vrf_conf:
