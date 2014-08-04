@@ -144,11 +144,14 @@ class BgpProcessor(Activity):
         if destination.route_family == RF_RTC_UC:
             dest_queue = self._rtdest_queue
 
+        LOG.debug('enqueue destination : %s' % destination)
+
         # We do not add given destination to the queue for processing if
         # it is already on the queue.
         if not dest_queue.is_on_list(destination):
             dest_queue.append(destination)
-
+        else:
+            LOG.debug('do not enqueue...')
         # Wake-up processing thread if sleeping.
         self.dest_que_evt.set()
 

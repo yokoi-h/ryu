@@ -180,6 +180,7 @@ class CoreService(Factory, Activity):
         return self._signal_bus
 
     def enqueue_for_bgp_processing(self, dest):
+        LOG.debug('enqueue_for_bgp_processing dest: %s' % dest)
         return self._bgp_processor.enqueue(dest)
 
     def on_vrf_removed(self, route_dist):
