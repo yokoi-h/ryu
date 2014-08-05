@@ -368,6 +368,7 @@ class Destination(object):
         LOG.debug('sent_route.path : %s' % sent_route.path)
         LOG.debug('add_sent_route self : %s' % self)
         self._sent_routes[sent_route.sent_peer] = sent_route
+        LOG.debug('add_sent_route _sent_routes : %s' % self._sent_routes)
 
     def remove_sent_route(self, peer):
         LOG.debug('sent_routes : %s' % self._sent_routes)
