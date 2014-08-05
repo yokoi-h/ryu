@@ -111,6 +111,8 @@ class BgpProcessor(Activity):
             # We process the first destination in the queue.
             next_dest = self._dest_queue.pop_first()
             if next_dest:
+                LOG.debug('_process_dest sent_routes : %s' % next_dest._sent_routes)
+                LOG.debug('_process_dest next_dest : %s' % next_dest)
                 next_dest.process()
                 dest_processed += 1
 
