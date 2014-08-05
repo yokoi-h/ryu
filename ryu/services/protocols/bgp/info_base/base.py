@@ -405,6 +405,8 @@ class Destination(object):
         LOG.debug('sent_routes : %s' % self._sent_routes)
         if new_best_path is None:
             # we lost best path
+            LOG.debug('Destination kick _best_path_lost : %s' % self._sent_routes)
+            LOG.debug('Destination kick table : %s' % self._table)
             assert not self._known_path_list, repr(self._known_path_list)
             return self._best_path_lost()
         else:
