@@ -88,6 +88,8 @@ class VpnDest(Destination, NonVrfPathProcessingMixin):
     __metaclass__ = abc.ABCMeta
 
     def _best_path_lost(self):
+        LOG.debug('----------- VpnDest ----------')
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         old_best_path = self._best_path
         NonVrfPathProcessingMixin._best_path_lost(self)
 
