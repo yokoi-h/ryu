@@ -141,12 +141,15 @@ class BgpProcessor(Activity):
         if not destination:
             raise BgpProcessorError('Invalid destination %s.' % destination)
 
+
+
         dest_queue = self._dest_queue
         # RtDest are queued in a separate queue
         if destination.route_family == RF_RTC_UC:
             dest_queue = self._rtdest_queue
 
         LOG.debug('enqueue destination : %s' % destination)
+        LOG.debug('enqueue destination._sent_routes : %s' % destination._sent_routes)
 
         # We do not add given destination to the queue for processing if
         # it is already on the queue.
