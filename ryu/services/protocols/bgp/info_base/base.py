@@ -359,6 +359,7 @@ class Destination(object):
         self._sent_routes[sent_route.sent_peer] = sent_route
 
     def remove_sent_route(self, peer):
+        LOG.debug('remove_sent_route peer : %s' % peer)
         if self.was_sent_to(peer):
             del self._sent_routes[peer]
             return True
