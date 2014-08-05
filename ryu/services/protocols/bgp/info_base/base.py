@@ -245,6 +245,10 @@ class NonVrfPathProcessingMixin(object):
             # Have to clear sent_route list for this destination as
             # best path is removed.
             self._sent_routes = {}
+        else:
+            LOG.debug('else _best_path_lost')
+            LOG.debug(self._sent_routes)
+
 
     def _new_best_path(self, new_best_path):
         old_best_path = self._best_path
