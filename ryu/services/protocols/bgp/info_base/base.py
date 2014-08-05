@@ -327,6 +327,7 @@ class Destination(object):
         # On work queue for BGP processor.
         # self.next_dest_to_process
         # self.prev_dest_to_process
+        self._memo = ''
 
     @property
     def route_family(self):
@@ -369,6 +370,10 @@ class Destination(object):
         LOG.debug('add_sent_route self : %s' % self)
         self._sent_routes[sent_route.sent_peer] = sent_route
         LOG.debug('add_sent_route _sent_routes : %s' % self._sent_routes)
+        if sent_route.path.nexthop == '::ffff:172.16.6.102':
+            self._memo = 'VpnV6Table'
+        LOG.debug('sent_route.path.next_hop : %s' % sent_route.path.nexthop)
+        LOG.debug('add_sent_route memo : %s' % self._memo)
 
     def remove_sent_route(self, peer):
         LOG.debug('sent_routes : %s' % self._sent_routes)
@@ -407,6 +412,7 @@ class Destination(object):
             # we lost best path
             LOG.debug('Destination kick _best_path_lost : %s' % self._sent_routes)
             LOG.debug('Destination kick table : %s' % self._table)
+            LOG.debug('_process memo : %s' % self._memo)
             assert not self._known_path_list, repr(self._known_path_list)
             return self._best_path_lost()
         else:
