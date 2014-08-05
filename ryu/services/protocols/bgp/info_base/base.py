@@ -170,7 +170,9 @@ class Table(object):
         return dest
 
     def delete_dest(self, dest):
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
         del self._destinations[self._table_key(dest.nlri)]
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
 
     def _validate_nlri(self, nlri):
         """Validated *nlri* is the type that this table stores/supports.
@@ -194,11 +196,13 @@ class Table(object):
         if dest is None:
             dest = self._create_dest(nlri)
             self._destinations[table_key] = dest
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
         return dest
 
     def _get_dest(self, nlri):
         table_key = self._table_key(nlri)
         dest = self._destinations.get(table_key)
+        LOG.debug('sent_routes : %s' % dest._sent_routes)
         return dest
 
     def is_for_vrf(self):
@@ -267,6 +271,7 @@ class NonVrfPathProcessingMixin(object):
         # bgp-peers.
         pm = self._core_service.peer_manager
         pm.comm_new_best_to_bgp_peers(new_best_path)
+        LOG.debug('sent_routes : %s' % self._sent_routes)
 
 
 class Destination(object):
@@ -346,10 +351,12 @@ class Destination(object):
         return self._sent_routes.values()
 
     def add_new_path(self, new_path):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._validate_path(new_path)
         self._new_path_list.append(new_path)
 
     def add_withdraw(self, withdraw):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._validate_path(withdraw)
         self._withdraw_list.append(withdraw)
 
@@ -361,6 +368,7 @@ class Destination(object):
         self._sent_routes[sent_route.sent_peer] = sent_route
 
     def remove_sent_route(self, peer):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         LOG.debug('remove_sent_route peer : %s' % peer)
         if self.was_sent_to(peer):
             del self._sent_routes[peer]
@@ -368,6 +376,7 @@ class Destination(object):
         return False
 
     def was_sent_to(self, peer):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         if peer in self._sent_routes.keys():
             return True
         return False
@@ -382,12 +391,15 @@ class Destination(object):
         choose new best-path. Communicates best-path to core service.
         """
         LOG.debug('Processing destination: %s', self)
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         new_best_path, reason = self._process_paths()
         self._best_path_reason = reason
 
         if self._best_path == new_best_path:
             return
 
+
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         if new_best_path is None:
             # we lost best path
             assert not self._known_path_list, repr(self._known_path_list)
@@ -412,11 +424,13 @@ class Destination(object):
             )
 
     def process(self):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._process()
         if not self._known_path_list and not self._best_path:
             self._remove_dest_from_table()
 
     def _remove_dest_from_table(self):
+        LOG.debug('sent_routes : %s' % self._sent_routes)
         self._table.delete_dest(self)
 
     def remove_old_paths_from_source(self, source):
