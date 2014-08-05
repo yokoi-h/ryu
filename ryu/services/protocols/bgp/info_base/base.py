@@ -91,6 +91,7 @@ class Table(object):
         return updated_dest
 
     def insert_sent_route(self, sent_route):
+        LOG.debug('insert_sent_route path: %s' % sent_route.path)
         self._validate_path(sent_route.path)
         dest = self._get_or_create_dest(sent_route.path.nlri)
         dest.add_sent_route(sent_route)

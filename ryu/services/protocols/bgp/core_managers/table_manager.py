@@ -135,7 +135,9 @@ class TableCoreManager(object):
 
         Records of `sent_route` from Adj-RIB-out.
         """
+        LOG.debug('remember_sent_route path: %s' % sent_route.path)
         route_family = sent_route.path.route_family
+        LOG.debug('remember_sent_route route_family: %s' % route_family)
         table = self.get_global_table_by_route_family(route_family)
         table.insert_sent_route(sent_route)
 
