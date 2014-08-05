@@ -151,6 +151,7 @@ class Table(object):
             LOG.debug('dest %s' % dest)
             added_withdraw = \
                 dest.withdraw_unintresting_paths(interested_rts)
+            LOG.debug('added_withdraw : %s' % added_withdraw)
             if added_withdraw:
                 self._signal_bus.dest_changed(dest)
                 uninteresting_dest_count += 1
