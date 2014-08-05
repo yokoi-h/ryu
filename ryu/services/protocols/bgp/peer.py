@@ -626,9 +626,13 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # not a withdraw or was for route-refresh msg.
         if (not outgoing_route.path.is_withdraw and
                 not outgoing_route.for_route_refresh):
+            p = outgoing_route.path
+            LOG.debug('_send_outgoing_route path: %s' % path)
             # Update the destination with new sent route.
             tm = self._core_service.table_manager
             tm.remember_sent_route(sent_route)
+        else:
+            LOG.debug('else _send_outgoing_route path: %s' % path)
 
     def _process_outgoing_msg_list(self):
         while True:
