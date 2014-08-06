@@ -370,7 +370,7 @@ class Destination(object):
         LOG.debug('add_sent_route self : %s' % self)
         self._sent_routes[sent_route.sent_peer] = sent_route
         LOG.debug('add_sent_route _sent_routes : %s' % self._sent_routes)
-        if sent_route.path.nexthop == '::ffff:172.16.6.102':
+        if sent_route.path.nexthop == '::ffff:172.16.6.102' or sent_route.path.nexthop == '172.16.6.102':
             self._memo = 'VpnV6Table'
         LOG.debug('sent_route.path.next_hop : %s' % sent_route.path.nexthop)
         LOG.debug('add_sent_route memo : %s' % self._memo)
