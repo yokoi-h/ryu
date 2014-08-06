@@ -203,7 +203,8 @@ class Table(object):
             self._destinations[table_key] = dest
         else:
             LOG.debug('_get_or_create_dest destination was found')
-        LOG.debug('_get_or_create_dest sent_routes : %s' % dest._sent_routes)
+        if dest._sent_routes:
+            LOG.debug('_get_or_create_dest sent_routes : %s' % dest._sent_routes)
         LOG.debug('_get_or_create_dest result dest : %s' % dest)
         return dest
 
