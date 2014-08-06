@@ -675,12 +675,12 @@ class Destination(object):
                 'paths': self._known_path_list[:],
                 'withdraws': self._get_num_withdraws()}
 
-    # def __str__(self):
-    #     return ('Destination(table: %s, nlri: %s, paths: %s, withdraws: %s,'
-    #             ' new paths: %s)' % (self._table, str(self._nlri),
-    #                                  len(self._known_path_list),
-    #                                  len(self._withdraw_list),
-    #                                  len(self._new_path_list)))
+    def __str__(self):
+        return ('Destination(table: %s, nlri: %s, paths: %s, withdraws: %s,'
+                ' new paths: %s)' % (self._table, str(self._nlri),
+                                     len(self._known_path_list),
+                                     len(self._withdraw_list),
+                                     len(self._new_path_list)))
 
     def _get_num_valid_paths(self):
         return len(self._known_path_list)
