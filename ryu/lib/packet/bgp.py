@@ -787,15 +787,15 @@ class _LabelledAddrPrefix(_AddrPrefix):
 
     @classmethod
     def _to_bin(cls, addr):
-        print '_LabelledAddrPrefix._to_bin addr: %s' % addr
+        print '_LabelledAddrPrefix._to_bin addr'
+        print addr
         labels = addr[0]
         rest = addr[1:]
         labels = map(lambda x: x << 4, labels)
         if labels:
             labels[-1] |= 1  # bottom of stack
         bin_labels = map(cls._label_to_bin, labels)
-        return bytes(reduce(lambda x, y: x + y, bin_labels,
-                            bytearray()) + cls._prefix_to_bin(rest))
+        return bytes(reduce(lambda x, y: x + y, bin_labels, bytearray()) + cls._prefix_to_bin(rest))
 
     @classmethod
     def _from_bin(cls, addr):
