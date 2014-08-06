@@ -44,6 +44,7 @@ class VpnTable(Table):
         """Return a key that will uniquely identify this vpnvX NLRI inside
         this table.
         """
+        LOG.debug('_table_key vpn_nlri: %s' % vpn_nlri)
         return vpn_nlri.route_dist + ':' + vpn_nlri.prefix
 
     def _create_dest(self, nlri):

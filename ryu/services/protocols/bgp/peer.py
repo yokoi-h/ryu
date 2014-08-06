@@ -607,6 +607,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         block, blocked_cause = self._apply_out_filter(path)
 
         nlri_str = outgoing_route.path.nlri.formatted_nlri_str
+        LOG.debug('_send_outgoing_route outgoing_route.path : %s' % outgoing_route.path)
         sent_route = SentRoute(outgoing_route.path, self, block)
         self._adj_rib_out[nlri_str] = sent_route
         self._signal_bus.adj_rib_out_changed(self, sent_route)
