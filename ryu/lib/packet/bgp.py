@@ -733,7 +733,7 @@ class _AddrPrefix(StringifyMixin):
             mask = 0xff00 >> (self.length % 8)
             last_byte = chr(ord(bin_addr[byte_length - 1]) & mask)
             bin_addr = bin_addr[:byte_length - 1] + last_byte
-        # self.addr = self._from_bin(bin_addr)
+        self.addr = self._from_bin(bin_addr)
 
         buf = bytearray()
         msg_pack_into(self._PACK_STR, buf, 0, self.length)
