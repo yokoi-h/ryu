@@ -616,7 +616,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # Construct and send update message.
         if not block:
             update_msg = self._construct_update(outgoing_route)
+            LOG.debug('_send_outgoing_route update_msg: %s' % update_msg)
             self._protocol.send(update_msg)
+            LOG.debug('_send_outgoing_route after update_msg: %s' % update_msg)
             # Collect update statistics.
             self.state.incr(PeerCounterNames.SENT_UPDATES)
         else:
@@ -627,7 +629,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         # not a withdraw or was for route-refresh msg.
         if (not outgoing_route.path.is_withdraw and
                 not outgoing_route.for_route_refresh):
-            p = outgoing_route.path
             LOG.debug('_send_outgoing_route path: %s' % path)
             # Update the destination with new sent route.
             tm = self._core_service.table_manager
