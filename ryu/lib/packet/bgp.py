@@ -787,6 +787,7 @@ class _LabelledAddrPrefix(_AddrPrefix):
 
     @classmethod
     def _to_bin(cls, addr):
+        print '_LabelledAddrPrefix._to_bin addr: %s' % addr
         labels = addr[0]
         rest = addr[1:]
         labels = map(lambda x: x << 4, labels)
