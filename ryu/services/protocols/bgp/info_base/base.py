@@ -101,6 +101,7 @@ class Table(object):
         """Add new path to destination identified by given prefix.
         """
         assert path.is_withdraw is False
+        LOG.debug('_insert_path path: %s' % path)
         dest = self._get_or_create_dest(path.nlri)
         # Add given path to matching Dest.
         dest.add_new_path(path)
