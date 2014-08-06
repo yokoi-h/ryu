@@ -753,6 +753,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         """Construct update message with Outgoing-routes path attribute
         appropriately cloned/copied/updated.
         """
+
+        LOG.debug('_construct_update begin outgoing_route.path: %s' % outgoing_route.path)
+
         update = None
         path = outgoing_route.path
         # Get copy of path's path attributes.
@@ -930,6 +933,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                                nlri=nlri_list)
         else:
             update = BGPUpdate(path_attributes=new_pathattr)
+
+        LOG.debug('_construct_update end outgoing_route.path: %s' % outgoing_route.path)
         return update
 
     def _connect_loop(self, client_factory):
