@@ -192,19 +192,25 @@ class Table(object):
                              ' Vpnv4 route family path, got %s.' % path)
 
     def _get_or_create_dest(self, nlri):
+        LOG.debug('_get_or_create_dest nlri : %s' % nlri)
         table_key = self._table_key(nlri)
+        LOG.debug('_get_or_create_dest table_key : %s' % table_key)
+        LOG.debug('self._get_or_create_dest self._destinations : %s' % self._destinations)
         dest = self._destinations.get(table_key)
         # If destination for given prefix does not exist we create it.
         if dest is None:
-            dest = self._create_dest(nlri)
+            LOG.debug('_get_or_create_dest destination was not found')
             self._destinations[table_key] = dest
-        LOG.debug('sent_routes : %s' % dest._sent_routes)
+        else:
+            LOG.debug('_get_or_create_dest destination was found')
+        LOG.debug('_get_or_create_dest sent_routes : %s' % dest._sent_routes)
+        LOG.debug('_get_or_create_dest result dest : %s' % dest)
         return dest
 
     def _get_dest(self, nlri):
         table_key = self._table_key(nlri)
         dest = self._destinations.get(table_key)
-        LOG.debug('sent_routes : %s' % dest._sent_routes)
+        LOG.debug('_get_dest sent_routes : %s' % dest._sent_routes)
         return dest
 
     def is_for_vrf(self):
