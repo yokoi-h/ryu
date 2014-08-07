@@ -498,9 +498,10 @@ class TableCoreManager(object):
             # if it is IPv4 address
             if is_valid_ipv4(next_hop):
                 next_hop = str(netaddr.IPAddress(next_hop).ipv6())
-            # normalize IPv6 address expression
-            prefix = str(netaddr.IPAddress(prefix))
+
             ip6, masklen = prefix.split('/')
+            # normalize IPv6 address expression
+            ip6 = str(netaddr.IPAddress(ip6))
             prefix = IP6AddrPrefix(int(masklen), ip6)
 
         return vrf_table.insert_vrf_path(
@@ -559,10 +560,6 @@ class TableCoreManager(object):
         if not val_ipv4 and not val_ipv6:
             raise BgpCoreError(desc='Invalid prefix or nexthop.')
 
-        # normalize IPv6 address expression
-        if val_ipv6:
-            prefix = str(netaddr.IPAddress(prefix))
-
         table_id = (route_dist, route_family)
         if route_family == VRF_RF_IPV4:
             vrf_table = self._tables.get(table_id)
@@ -577,6 +574,8 @@ class TableCoreManager(object):
                 raise BgpCoreError(desc='Vrf for route distinguisher %s does '
                                         'not exist.' % route_dist)
             ip6, masklen = prefix.split('/')
+            # normalize IPv6 address expression
+            ip6 = str(netaddr.IPAddress(ip6))
             prefix = IP6AddrPrefix(int(masklen), ip6)
             # We do not check if we have a path to given prefix, we issue
         # withdrawal. Hence multiple withdrawals have not side effect.
