@@ -344,6 +344,7 @@ class BGPSpeaker(object):
         if route_dist:
             func_name = 'prefix.delete_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
+            networks[ROUTE_FAMILY] = route_family
 
         call(func_name, **networks)
 
