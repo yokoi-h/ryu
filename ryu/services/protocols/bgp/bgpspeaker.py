@@ -325,7 +325,7 @@ class BGPSpeaker(object):
 
         call(func_name, **networks)
 
-    def prefix_del(self, prefix, route_dist=None, route_family=None):
+    def prefix_del(self, prefix, route_dist=None, route_family=RF_VPN_V4):
         """ This method deletes a advertized prefix.
 
         ``prefix`` must be the string representation of an IP network
