@@ -490,8 +490,16 @@ class TableCoreManager(object):
             if vrf_table is None:
                 raise BgpCoreError(desc='VRF table for RD: %s does not '
                                         'exist.' % route_dist)
-            if not is_valid_ipv6_prefix(prefix) or not is_valid_ipv6(next_hop):
+            if not is_valid_ipv6_prefix(prefix)\
+                    or not (is_valid_ipv6(next_hop)
+                            or is_valid_ipv4(next_hop)):
                 raise BgpCoreError(desc='Invalid Ipv6 prefix or nexthop.')
+            # Convert next_hop address to IPv4-Mapped IPv6 Address
+            # if it is IPv4 address
+            if is_valid_ipv4(next_hop):
+                next_hop = str(netaddr.IPAddress(next_hop).ipv6())
+            # normalize IPv6 address expression
+            prefix = str(netaddr.IPAddress(prefix))
             ip6, masklen = prefix.split('/')
             prefix = IP6AddrPrefix(int(masklen), ip6)
 
@@ -550,6 +558,10 @@ class TableCoreManager(object):
 
         if not val_ipv4 and not val_ipv6:
             raise BgpCoreError(desc='Invalid prefix or nexthop.')
+
+        # normalize IPv6 address expression
+        if val_ipv6:
+            prefix = str(netaddr.IPAddress(prefix))
 
         table_id = (route_dist, route_family)
         if route_family == VRF_RF_IPV4:

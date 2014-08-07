@@ -322,6 +322,7 @@ class BGPSpeaker(object):
 
             if route_family:
                 networks[ROUTE_FAMILY] = route_family
+
         call(func_name, **networks)
 
     def prefix_del(self, prefix, route_dist=None, route_family=None):
