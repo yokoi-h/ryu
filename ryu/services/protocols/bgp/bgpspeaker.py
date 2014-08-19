@@ -312,9 +312,9 @@ class BGPSpeaker(object):
             func_name = 'prefix.add_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
 
-            rf, addr = self.__check_prefix_and_normalize(prefix)
+            rf, p = self._check_rf_and_normalize(prefix)
             networks[ROUTE_FAMILY] = rf
-            networks[PREFIX] = addr
+            networks[PREFIX] = p
 
             if rf == vrfs.VRF_RF_IPV6 and netaddr.valid_ipv4(next_hop):
                 # convert the next_hop to IPv4-Mapped IPv6 Address
@@ -341,9 +341,9 @@ class BGPSpeaker(object):
             func_name = 'prefix.delete_local'
             networks[ROUTE_DISTINGUISHER] = route_dist
 
-            rf, addr = self.__check_prefix_and_normalize(prefix)
+            rf, p = self._check_rf_and_normalize(prefix)
             networks[ROUTE_FAMILY] = rf
-            networks[PREFIX] = addr
+            networks[PREFIX] = p
 
         call(func_name, **networks)
 
@@ -525,9 +525,9 @@ class BGPSpeaker(object):
         call(func_name, **param)
 
     @staticmethod
-    def __check_prefix_and_normalize(prefix):
-        """ check prefix's address and if the address is IPv6 address,
-        return IPv6 route_family and normalized IPv6 address.
+    def _check_rf_and_normalize(prefix):
+        """ check prefix's route_family and if the address is
+        IPv6 address, return IPv6 route_family and normalized IPv6 address.
         If the address is IPv4 address, return IPv4 route_family
         and the prefix itself.
 
