@@ -1236,6 +1236,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         )
 
         nlri_list = update_msg.nlri
+        LOG.debug('NLRI_list: %s', nlri_list)
+        LOG.debug('mp_reach_attr: %s', mp_reach_attr)
         withdraw_list = update_msg.withdrawn_routes
 
         if mp_reach_attr:
