@@ -904,7 +904,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 if AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE in self._attribute_maps:
                     maps = self._attribute_maps[AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE]
                     for m in maps:
-                        result, cause = m.evaluate(path)
+                        cause, result = m.evaluate(path)
+                        LOG.debug("local_preference evaluation result:%s, cause:%s", result, cause)
                         if result:
                             localpref_attr = m.get_attribute()
                             break

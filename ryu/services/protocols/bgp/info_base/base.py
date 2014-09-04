@@ -1073,6 +1073,7 @@ class ASPathFilter(Filter):
         return self.__class__(self._as_number,
                               policy=self._policy)
 
+
 class AttributeMap(object):
     """
     This class is used to specify an attribute to add if path matches filters.
@@ -1111,11 +1112,11 @@ class AttributeMap(object):
 
         for f in self.filters:
 
-            result, cause = f.evaluate(path)
+            cause, result = f.evaluate(path)
             if not result:
                 break
 
-        return result, cause
+        return cause, result
 
     def get_attribute(self):
         func = getattr(self, 'get' + self.attr_type)
