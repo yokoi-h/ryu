@@ -150,6 +150,24 @@ def set_neighbor_in_filter(neigh_ip_address, filters):
     return True
 
 
+@RegisterWithArgChecks(name='neighbor.attribute_map.set',
+                       req_args=[neighbors.IP_ADDRESS, neighbors.ROUTE_MAP])
+def set_neighbor_in_filter(neigh_ip_address, attribute_maps):
+    """Returns a neighbor attribute_map for given ip address if exists."""
+    core = CORE_MANAGER.get_core_service()
+    peer = core.peer_manager.get_by_addr(neigh_ip_address)
+    peer.attribute_maps = attribute_maps
+    return True
+
+
+@RegisterWithArgChecks(name='neighbor.attribute_map.get',
+                       req_args=[neighbors.IP_ADDRESS])
+def get_neighbor_out_filter(neigh_ip_address):
+    """Returns a neighbor attribute_map for given ip address if exists."""
+    core = CORE_MANAGER.get_core_service()
+    ret = core.peer_manager.get_by_addr(neigh_ip_address).attribute_maps
+    return ret
+
 # =============================================================================
 # VRF configuration related APIs
 # =============================================================================

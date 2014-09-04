@@ -79,6 +79,7 @@ IN_FILTER = 'in_filter'
 OUT_FILTER = 'out_filter'
 IS_ROUTE_SERVER_CLIENT = 'is_route_server_client'
 CHECK_FIRST_AS = 'check_first_as'
+ROUTE_MAP = 'route_map'
 
 # Default value constants.
 DEFAULT_CAP_GR_NULL = True
@@ -220,6 +221,11 @@ def validate_in_filters(filters):
 @validate(name=OUT_FILTER)
 def validate_out_filters(filters):
     return [valid_filter(filter_) for filter_ in filters]
+
+
+@validate(name=ROUTE_MAP)
+def validate_attribute_maps(attribute_maps):
+    return [attribute_map for attribute_map in attribute_maps]
 
 
 @validate(name=IS_ROUTE_SERVER_CLIENT)

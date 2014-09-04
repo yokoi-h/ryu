@@ -28,6 +28,8 @@ import netaddr
 from ryu.lib.packet.bgp import RF_IPv4_UC
 from ryu.lib.packet.bgp import RouteTargetMembershipNLRI
 from ryu.lib.packet.bgp import BGP_ATTR_TYPE_EXTENDED_COMMUNITIES
+from ryu.lib.packet.bgp import BGPPathAttributeLocalPref
+from ryu.lib.packet.bgp import BGP_ATTR_TYPE_AS_PATH
 
 from ryu.services.protocols.bgp.base import OrderedDict
 from ryu.services.protocols.bgp.constants import VPN_TABLE
@@ -984,3 +986,150 @@ class PrefixFilter(Filter):
                               policy=self._policy,
                               ge=self._ge,
                               le=self._le)
+
+class ASPathFilter(Filter):
+    """
+    used to specify a prefix for AS_PATH attribute.
+
+    We can create ASPathFilter object as follows.
+
+    as_path_filter = ASPathFilter(65000,
+                                 policy=ASPathFilter.TOP)
+
+    ================ ==================================================
+    Attribute        Description
+    ================ ==================================================
+    as_number        A AS number used for this filter
+    policy           ASPathFilter.POLICY_TOP or PrefixFilter.POLICY_ANY
+                     POLICY_TOP means checking specified AS number exists
+                     on top of AS_PATH list.
+                     POLICY_ANY means checking specified AS number exists
+                     in a path's AS_PATH list.
+    ================ ==================================================
+
+    """
+
+    POLICY_TOP = 2
+    POLICY_ANY = 3
+
+    def __init__(self, as_number, policy):
+        super(ASPathFilter, self).__init__(policy)
+        self._as_number = as_number
+
+    def __cmp__(self, other):
+        return cmp(self.as_number, other.as_number)
+
+    def __repr__(self):
+        policy = 'TOP' \
+            if self._policy == self.POLICY_TOP else 'ANY'
+
+        return 'ASPathFilter(as_number=%s,policy=%s)'\
+               % (self._as_number, policy)
+
+    @property
+    def as_number(self):
+        return self._as_number
+
+    @property
+    def policy(self):
+        return self._policy
+
+    def evaluate(self, path):
+        """ This method evaluates as_path list.
+
+        Returns this object's policy and the result of matching.
+        If the specified prefix matches this object's prefix and
+        ge and le condition,
+        this method returns True as the matching result.
+
+        ``path`` specifies the path.
+
+        """
+
+        path_aspath = path.pathattr_map.get(BGP_ATTR_TYPE_AS_PATH)
+        path_seg_list = path_aspath.path_seg_list
+        result = False
+        LOG.debug("path_seg_list: %s", path_seg_list)
+        if self.policy == ASPathFilter.POLICY_TOP:
+            path_seg = []
+            if len(path_seg_list) > 0:
+                if isinstance(path_seg_list[0], list):
+                    path_seg = path_seg_list[0]
+                    LOG.debug("path first segment: %s", path_seg_list[0])
+                else:
+                    path_seg = path_seg_list
+
+            if len(path_seg) > 0 and path_seg[0] == self._as_number:
+                result = True
+
+        elif self.policy == ASPathFilter.POLICY_ANY:
+            for aspath in path_seg_list:
+                if aspath == self._as_number:
+                    result = True
+                    break
+
+        return self.policy, result
+
+    def clone(self):
+        """ This method clones ASPathFilter object.
+
+        Returns ASPathFilter object that has the same values with the
+        original one.
+
+        """
+
+        return self.__class__(self._as_number,
+                              policy=self._policy)
+
+
+class AttributeMap(object):
+    """
+    This class is used to specify an attribute to add if path matches filters.
+
+    We can create AttributeMap object as follows
+
+    attribute_map = AttributeMap('10.5.111.0/24',
+                                 policy=PrefixFilter.POLICY_PERMIT)
+
+    =================== ==================================================
+    Attribute           Description
+    =================== ==================================================
+    filters             A list of filter.
+                        Each object should be a Filter class or its sub-class
+    attr_type           A type of attribute to map on filters
+    attr_value          A attribute value
+    attr_default_value  A default value for attribute if path doesn't match
+    =================== ==================================================
+    
+    """
+
+    ATTR_TYPE_LOCAL_PREFERENCE = '_local_pref'
+
+    def __init__(self, filters, attr_type, attr_value, attr_default_value=None):
+
+        assert all(isinstance(f, Filter) for f in filters),\
+            'all the items in filters must be an instance of Filter sub-class'
+        self.filters = filters
+        self.attr_type = attr_type
+        self.attr_value = attr_value
+        self.attr_default_value = attr_default_value
+
+    def evaluate(self, path):
+        result = False
+        cause = None
+
+        for f in self.filters:
+
+            cause, result = f.evaluate(path)
+            if not result:
+                break
+
+        return cause, result
+
+    def get_attribute(self):
+        func = getattr(self, 'get' + self.attr_type)
+        return func()
+
+    def get_local_pref(self):
+        local_pref_attr = BGPPathAttributeLocalPref(value=self.attr_value)
+        return local_pref_attr
