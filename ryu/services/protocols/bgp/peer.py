@@ -417,7 +417,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
     def attribute_maps(self):
         return self._attribute_maps['original']
 
-    @property.setter
+    @attribute_maps.setter
     def attribute_maps(self, attribute_maps):
         _attr_maps = {}
         for a in attribute_maps:
