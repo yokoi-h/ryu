@@ -528,6 +528,8 @@ class BGPSpeaker(object):
 
     def attribute_map_set(self, address, attribute_maps):
 
+        # TODO check if attribute_maps is object of AttributeMap
+
         func_name = 'neighbor.attribute_map.set'
         param = {}
         param[neighbors.IP_ADDRESS] = address
