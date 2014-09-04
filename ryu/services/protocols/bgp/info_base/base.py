@@ -1051,15 +1051,17 @@ class ASPathFilter(Filter):
         result = False
         LOG.debug("path_seg_list: %s", path_seg_list)
         if self.policy == ASPathFilter.POLICY_TOP:
-
+            path_seg = []
             if len(path_seg_list) > 0:
                 if isinstance(path_seg_list[0], list):
-                    LOG.debug("path first segment is list")
-                    
-                LOG.debug("path first segment: %s", path_seg_list[0])
+                    path_seg = path_seg_list[0]
+                    LOG.debug("path first segment: %s", path_seg_list[0])
+                else:
+                    path_seg = path_seg_list
 
-            if len(path_seg_list) > 0 and path_seg_list[0] == self._as_number:
+            if len(path_seg) > 0 and path_seg[0] == self._as_number:
                 result = True
+                
         elif self.policy == ASPathFilter.POLICY_ANY:
             for aspath in path_seg_list:
                 if aspath == self._as_number:
