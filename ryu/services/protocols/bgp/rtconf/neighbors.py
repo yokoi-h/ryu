@@ -223,6 +223,11 @@ def validate_out_filters(filters):
     return [valid_filter(filter_) for filter_ in filters]
 
 
+@validate(name=ROUTE_MAP)
+def validate_attribute_maps(attribute_maps):
+    return [attribute_map for attribute_map in attribute_maps]
+
+
 @validate(name=IS_ROUTE_SERVER_CLIENT)
 def validate_is_route_server_client(is_route_server_client):
     if is_route_server_client not in (True, False):
