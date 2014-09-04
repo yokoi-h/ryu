@@ -526,6 +526,25 @@ class BGPSpeaker(object):
         param['port'] = port
         call(func_name, **param)
 
+    def attribute_map_set(self, address, attribute_maps):
+
+        # TODO check if attribute_maps is object of AttributeMap
+
+        func_name = 'neighbor.attribute_map.set'
+        param = {}
+        param[neighbors.IP_ADDRESS] = address
+        param[neighbors.ROUTE_MAP] = attribute_maps
+        call(func_name, **param)
+
+    def attribute_map_get(self, address):
+
+        func_name = 'neighbor.attribute_map.get'
+        param = {}
+        param[neighbors.IP_ADDRESS] = address
+        local_pref, filters = call(func_name, **param)
+        return local_pref, filters
+
+
     @staticmethod
     def _check_rf_and_normalize(prefix):
         """ check prefix's route_family and if the address is
