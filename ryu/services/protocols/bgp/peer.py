@@ -421,6 +421,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
     def attribute_maps(self, attribute_maps):
         _attr_maps = {}
         for a in attribute_maps:
+            LOG.debug("AttributeMap attr_type: %s, attr_value: %s", a.attr_type, a.attr_value)
             attr_list = _attr_maps.setdefault(a.attr_type, [])
             attr_list.append(a)
 

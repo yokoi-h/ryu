@@ -5,7 +5,7 @@ eventlet.monkey_patch()
 
 import logging
 import sys
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 from ryu.services.protocols.bgp.bgpspeaker import BGPSpeaker
 from ryu.services.protocols.bgp.info_base.base import AttributeMap
