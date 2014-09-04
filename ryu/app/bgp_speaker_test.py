@@ -28,6 +28,8 @@ if __name__ == "__main__":
     #speaker.prefix_add('192.168.103.0/30', next_hop='0.0.0.0', route_dist='65010:101')
     speaker.prefix_add('192.168.103.0/30', next_hop='0.0.0.0')
 
+    eventlet.sleep(10)
+
     pref_filter = PrefixFilter('192.168.103.0/30', PrefixFilter.POLICY_PERMIT)
     aspath_filter = ASPathFilter(9598, ASPathFilter.POLICY_TOP)
     attr_map_prefix = AttributeMap([pref_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 250)
