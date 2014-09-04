@@ -899,13 +899,14 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 # for connected or local prefixes.
                 # We check if the path matches attribute_maps and set local-pref value.
                 # If the path doesn't match, we set default local-pref 100.
-                maps = self._attribute_maps[AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE]
                 localpref_attr = BGPPathAttributeLocalPref(100)
-                for m in maps:
-                    result, cause = m.evaluate(path)
-                    if result:
-                        localpref_attr = m.get_attribute()
-                        break
+                if AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE in self._attribute_maps:
+                    maps = self._attribute_maps[AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE]
+                    for m in maps:
+                        result, cause = m.evaluate(path)
+                        if result:
+                            localpref_attr = m.get_attribute()
+                            break
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)
