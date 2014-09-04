@@ -33,7 +33,7 @@ if __name__ == "__main__":
     pref_filter = PrefixFilter('192.168.103.0/30', PrefixFilter.POLICY_PERMIT)
     aspath_filter = ASPathFilter(9598, ASPathFilter.POLICY_TOP)
     attr_map_prefix = AttributeMap([pref_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 250)
-    attr_map_aspath = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 250)
+    attr_map_aspath = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 200)
     speaker.attribute_map_set('192.168.50.102', [attr_map_prefix, attr_map_aspath])
     
     while True:

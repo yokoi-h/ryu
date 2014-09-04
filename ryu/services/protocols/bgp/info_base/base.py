@@ -1061,7 +1061,7 @@ class ASPathFilter(Filter):
 
             if len(path_seg) > 0 and path_seg[0] == self._as_number:
                 result = True
-                
+
         elif self.policy == ASPathFilter.POLICY_ANY:
             for aspath in path_seg_list:
                 if aspath == self._as_number:
