@@ -79,6 +79,7 @@ IN_FILTER = 'in_filter'
 OUT_FILTER = 'out_filter'
 IS_ROUTE_SERVER_CLIENT = 'is_route_server_client'
 CHECK_FIRST_AS = 'check_first_as'
+ROUTE_MAP = 'route_map'
 
 # Default value constants.
 DEFAULT_CAP_GR_NULL = True
