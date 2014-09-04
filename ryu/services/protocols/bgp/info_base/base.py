@@ -1047,15 +1047,14 @@ class ASPathFilter(Filter):
         """
 
         path_aspath = path.pathattr_map.get(BGP_ATTR_TYPE_AS_PATH)
+        path_seg_list = path_aspath.path_seg_list
         result = False
-        for aspath in path_aspath:
-            if self.policy == self.POLICY_TOP:
-                if aspath == self._as_number:
-                    result = True
-                else:
-                    result = False
-                break
-            else:
+        LOG.debug("path_seg_list: %s", path_seg_list)
+        if self.policy == ASPathFilter.POLICY_TOP:
+            if len(path_seg_list) > 0 and path_seg_list[0] == self._as_number:
+                result = True
+        elif self.policy == ASPathFilter.POLICY_ANY:
+            for aspath in path_seg_list:
                 if aspath == self._as_number:
                     result = True
                     break
