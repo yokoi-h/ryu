@@ -34,7 +34,7 @@ if __name__ == "__main__":
     #attr_map_aspath1 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 200)
 
     # set LocalPreference 200 to Path containing AS 9599
-    aspath_filter = ASPathFilter(9599, ASPathFilter.POLICY_INCLUDE)
+    aspath_filter = ASPathFilter(9599, ASPathFilter.POLICY_NOT_INCLUDE)
     attr_map_aspath2 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 230)
 
     # set LocalPreference 200 to Path containing AS 9599
