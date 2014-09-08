@@ -1010,7 +1010,8 @@ class ASPathFilter(Filter):
     """
 
     POLICY_TOP = 2
-    POLICY_ANY = 3
+    POLICY_INCLUDE = 3
+    POLICY_END = 4
 
     def __init__(self, as_number, policy):
         super(ASPathFilter, self).__init__(policy)
@@ -1020,8 +1021,11 @@ class ASPathFilter(Filter):
         return cmp(self.as_number, other.as_number)
 
     def __repr__(self):
-        policy = 'TOP' \
-            if self._policy == self.POLICY_TOP else 'ANY'
+        policy = 'TOP'
+        if self._policy == self.POLICY_INCLUDE:
+            policy = 'INCLUDE'
+        elif self._policy == self.POLICY_END:
+            policy = 'END'
 
         return 'ASPathFilter(as_number=%s,policy=%s)'\
                % (self._as_number, policy)
@@ -1038,8 +1042,8 @@ class ASPathFilter(Filter):
         """ This method evaluates as_path list.
 
         Returns this object's policy and the result of matching.
-        If the specified prefix matches this object's prefix and
-        ge and le condition,
+        If the specified AS number matches this object's AS number
+        according to the policy,
         this method returns True as the matching result.
 
         ``path`` specifies the path.
@@ -1048,25 +1052,25 @@ class ASPathFilter(Filter):
 
         path_aspath = path.pathattr_map.get(BGP_ATTR_TYPE_AS_PATH)
         path_seg_list = path_aspath.path_seg_list
+        path_seg = path_seg_list[0]
         result = False
-        LOG.debug("path_seg_list: %s", path_seg_list)
+
+        LOG.debug("path_seg : %s", path_seg)
         if self.policy == ASPathFilter.POLICY_TOP:
-            path_seg = []
-            if len(path_seg_list) > 0:
-                if isinstance(path_seg_list[0], list):
-                    path_seg = path_seg_list[0]
-                    LOG.debug("path first segment: %s", path_seg_list[0])
-                else:
-                    path_seg = path_seg_list
 
             if len(path_seg) > 0 and path_seg[0] == self._as_number:
                 result = True
 
-        elif self.policy == ASPathFilter.POLICY_ANY:
+        elif self.policy == ASPathFilter.POLICY_INCLUDE:
             for aspath in path_seg_list:
                 if aspath == self._as_number:
                     result = True
                     break
+
+        elif self.policy == ASPathFilter.POLICY_END:
+
+            if len(path_seg) > 0 and path_seg[-1] == self._as_number:
+                result = True
 
         return self.policy, result
 
