@@ -1063,7 +1063,8 @@ class ASPathFilter(Filter):
                 result = True
 
         elif self.policy == ASPathFilter.POLICY_INCLUDE:
-            for aspath in path_seg_list:
+            for aspath in path_seg:
+                LOG.debug("POLICY_INCLUDE as_number : %s", aspath)
                 if aspath == self._as_number:
                     result = True
                     break
