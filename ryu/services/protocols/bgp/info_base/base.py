@@ -1010,8 +1010,9 @@ class ASPathFilter(Filter):
     """
 
     POLICY_TOP = 2
-    POLICY_INCLUDE = 3
-    POLICY_END = 4
+    POLICY_END = 3
+    POLICY_INCLUDE = 4
+    POLICY_NOT_INCLUDE = 5
 
     def __init__(self, as_number, policy):
         super(ASPathFilter, self).__init__(policy)
@@ -1070,6 +1071,11 @@ class ASPathFilter(Filter):
         elif self.policy == ASPathFilter.POLICY_END:
 
             if len(path_seg) > 0 and path_seg[-1] == self._as_number:
+                result = True
+
+        elif self.policy == ASPathFilter.POLICY_NOT_INCLUDE:
+
+            if self._as_number not in path_seg:
                 result = True
 
         return self.policy, result
