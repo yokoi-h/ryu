@@ -31,10 +31,18 @@ if __name__ == "__main__":
 
     # set LocalPreference 200 to Path containing AS 9598
     aspath_filter = ASPathFilter(9598, ASPathFilter.POLICY_TOP)
-    attr_map_aspath = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 200)
+    attr_map_aspath1 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 200)
+
+    # set LocalPreference 200 to Path containing AS 9599
+    aspath_filter = ASPathFilter(9599, ASPathFilter.POLICY_END)
+    attr_map_aspath2 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 220)
+
+    # set LocalPreference 200 to Path containing AS 9599
+    aspath_filter = ASPathFilter(9600, ASPathFilter.POLICY_END)
+    attr_map_aspath3 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 240)
 
     # set attribute map to neighbor
-    speaker.attribute_map_set('192.168.50.102', [attr_map_prefix, attr_map_aspath])
+    speaker.attribute_map_set('192.168.50.102', [attr_map_prefix, attr_map_aspath1, attr_map_aspath2, attr_map_aspath3])
     
     while True:
         eventlet.sleep(5)
