@@ -1171,6 +1171,9 @@ class AttributeMap(object):
 
     def __repr__(self):
 
+        attr_type = 'LOCAL_PREF'\
+            if self.attr_type == self.ATTR_TYPE_LOCAL_PREFERENCE else None
+
         filter_string = ','.join(repr(f) for f in self.filters)
         return 'AttributeMap(filters=[%s],as_number=%s,policy=%s)'\
-               % (filter_string, self.attr_type, self.attr_value)
+               % (filter_string, attr_type, self.attr_value)
