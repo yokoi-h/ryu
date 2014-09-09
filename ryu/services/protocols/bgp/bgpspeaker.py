@@ -541,9 +541,8 @@ class BGPSpeaker(object):
         func_name = 'neighbor.attribute_map.get'
         param = {}
         param[neighbors.IP_ADDRESS] = address
-        local_pref, filters = call(func_name, **param)
-        return local_pref, filters
-
+        attribute_maps = call(func_name, **param)
+        return attribute_maps
 
     @staticmethod
     def _check_rf_and_normalize(prefix):
