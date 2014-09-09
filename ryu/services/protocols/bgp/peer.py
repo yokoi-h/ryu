@@ -422,7 +422,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
         _attr_maps = {}
         for a in attribute_maps:
             cloned = a.clone()
-            LOG.debug("AttributeMap attr_type: %s, attr_value: %s", cloned.attr_type, cloned.attr_value)
+            LOG.debug("AttributeMap attr_type: %s, attr_value: %s",
+                      cloned.attr_type, cloned.attr_value)
             attr_list = _attr_maps.setdefault(cloned.attr_type, [])
             attr_list.append(cloned)
 
@@ -898,18 +899,22 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             # LOCAL_PREF Attribute.
             if not self.is_ebgp_peer():
                 # For iBGP peers we are required to send local-pref attribute
-                # for connected or local prefixes.
-                # We check if the path matches attribute_maps and set local-pref value.
+                # for connected or local prefixes. We check if the path matches
+                # attribute_maps and set local-pref value.
                 # If the path doesn't match, we set default local-pref 100.
                 localpref_attr = BGPPathAttributeLocalPref(100)
-                if AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE in self._attribute_maps:
-                    maps = self._attribute_maps[AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE]
-                    for m in maps:
-                        cause, result = m.evaluate(path)
-                        LOG.debug("local_preference evaluation result:%s, cause:%s", result, cause)
-                        if result:
-                            localpref_attr = m.get_attribute()
-                            break
+                if isinstance(path, Ipv4Path):
+                    if AttributeMap.ATTR_LOCAL_PREF in self._attribute_maps:
+                        maps = self._attribute_maps[AttributeMap.ATTR_LOCAL_PREF]
+                        for m in maps:
+                            cause, result = m.evaluate(path)
+                            LOG.debug(
+                                "local_pref evaluation result:%s, cause:%s",
+                                result, cause)
+
+                            if result:
+                                localpref_attr = m.get_attribute()
+                                break
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)

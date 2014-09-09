@@ -27,7 +27,7 @@ if __name__ == "__main__":
     eventlet.sleep(10)
     # set LocalPreference 250 to Path(192.168.103.0)
     pref_filter = PrefixFilter('192.168.103.0/30', PrefixFilter.POLICY_PERMIT)
-    attr_map_prefix = AttributeMap([pref_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 250)
+    attr_map_prefix = AttributeMap([pref_filter], AttributeMap.ATTR_LOCAL_PREF, 250)
 
     # set LocalPreference 200 to Path containing AS 9598
     #aspath_filter = ASPathFilter(9598, ASPathFilter.POLICY_END)
@@ -35,11 +35,11 @@ if __name__ == "__main__":
 
     # set LocalPreference 200 to Path containing AS 9599
     aspath_filter = ASPathFilter(9599, ASPathFilter.POLICY_NOT_INCLUDE)
-    attr_map_aspath2 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 230)
+    attr_map_aspath2 = AttributeMap([aspath_filter], AttributeMap.ATTR_LOCAL_PREF, 230)
 
     # set LocalPreference 200 to Path containing AS 9599
     aspath_filter = ASPathFilter(9600, ASPathFilter.POLICY_END)
-    attr_map_aspath3 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 240)
+    attr_map_aspath3 = AttributeMap([aspath_filter], AttributeMap.ATTR_LOCAL_PREF, 240)
 
     # set attribute map to neighbor
     attr_maps = [attr_map_prefix, attr_map_aspath2, attr_map_aspath3]

@@ -987,6 +987,7 @@ class PrefixFilter(Filter):
                               ge=self._ge,
                               le=self._le)
 
+
 class ASPathFilter(Filter):
     """
     used to specify a prefix for AS_PATH attribute.
@@ -1122,13 +1123,12 @@ class AttributeMap(object):
     filters             A list of filter.
                         Each object should be a Filter class or its sub-class
     attr_type           A type of attribute to map on filters. Currently
-                        AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE is available.
+                        AttributeMap.ATTR_LOCAL_PREF is available.
     attr_value          A attribute value
     =================== ==================================================
-    
     """
 
-    ATTR_TYPE_LOCAL_PREFERENCE = '_local_pref'
+    ATTR_LOCAL_PREF = '_local_pref'
 
     def __init__(self, filters, attr_type, attr_value):
 
@@ -1172,8 +1172,8 @@ class AttributeMap(object):
     def __repr__(self):
 
         attr_type = 'LOCAL_PREF'\
-            if self.attr_type == self.ATTR_TYPE_LOCAL_PREFERENCE else None
+            if self.attr_type == self.ATTR_LOCAL_PREF else None
 
         filter_string = ','.join(repr(f) for f in self.filters)
-        return 'AttributeMap(filters=[%s],as_number=%s,policy=%s)'\
+        return 'AttributeMap(filters=[%s],attribute_type=%s,attribute_value=%s)'\
                % (filter_string, attr_type, self.attr_value)
