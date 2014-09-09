@@ -1168,3 +1168,10 @@ class AttributeMap(object):
 
         cloned_filters = [f.clone() for f in self.filters]
         return self.__class__(cloned_filters, self.attr_type, self.attr_value)
+
+    def __repr__(self):
+
+        filter_string = ','.join(self.filters)
+
+        return 'AttributeMap(filters=[%s],as_number=%s,policy=%s)'\
+               % (filter_string, self.attr_type, self.attr_value)
