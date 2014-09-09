@@ -421,9 +421,10 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
     def attribute_maps(self, attribute_maps):
         _attr_maps = {}
         for a in attribute_maps:
-            LOG.debug("AttributeMap attr_type: %s, attr_value: %s", a.attr_type, a.attr_value)
-            attr_list = _attr_maps.setdefault(a.attr_type, [])
-            attr_list.append(a)
+            cloned = a.clone()
+            LOG.debug("AttributeMap attr_type: %s, attr_value: %s", cloned.attr_type, cloned.attr_value)
+            attr_list = _attr_maps.setdefault(cloned.attr_type, [])
+            attr_list.append(cloned)
 
         _attr_maps['original'] = attribute_maps
         self._attribute_maps = _attr_maps

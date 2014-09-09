@@ -1000,12 +1000,17 @@ class ASPathFilter(Filter):
     Attribute        Description
     ================ ==================================================
     as_number        A AS number used for this filter
-    policy           ASPathFilter.POLICY_TOP or PrefixFilter.POLICY_ANY
-                     POLICY_TOP means checking specified AS number exists
-                     on top of AS_PATH list.
-                     POLICY_ANY means checking specified AS number exists
-                     in a path's AS_PATH list.
+    policy           ASPathFilter.POLICY_TOP and PrefixFilter.POLICY_END,
+                     ASPathFilter.POLICY_INCLUDE and
+                     PrefixFilter.POLICY_NOT_INCLUDE are available.
     ================ ==================================================
+
+    POLICY_TOP means that the filter checks the specified AS number
+    is at the top of AS_PATH attribute.
+    POLICY_TOP means that the filter checks the specified AS number
+    is at the last of AS_PATH attribute.
+    POLICY_INCLUDE means checking if specified AS number exists
+    in AS_PATH attribute, and POLICY_NOT_INCLUDE is the opposite meaning.
 
     """
 
@@ -1025,6 +1030,8 @@ class ASPathFilter(Filter):
         policy = 'TOP'
         if self._policy == self.POLICY_INCLUDE:
             policy = 'INCLUDE'
+        elif self._policy == self.POLICY_NOT_INCLUDE:
+            policy = 'NOT_INCLUDE'
         elif self._policy == self.POLICY_END:
             policy = 'END'
 
@@ -1096,34 +1103,40 @@ class ASPathFilter(Filter):
 class AttributeMap(object):
     """
     This class is used to specify an attribute to add if path matches filters.
-
     We can create AttributeMap object as follows
 
-    attribute_map = AttributeMap('10.5.111.0/24',
-                                 policy=PrefixFilter.POLICY_PERMIT)
+    pref_filter = PrefixFilter('192.168.103.0/30', PrefixFilter.POLICY_PERMIT)
+    attribute_map = AttributeMap([pref_filter],
+                            AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 250)
+    speaker.attribute_map_set('192.168.50.102', [attribute_map])
+
+    AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE means that 250 is set as a
+    local preference value if nlri in the path matches pref_filter.
+
+    ASPathFilter is also available as a filter. ASPathFilter checks if AS_PATH
+    attribute in the path matches AS number in the filter.
 
     =================== ==================================================
     Attribute           Description
     =================== ==================================================
     filters             A list of filter.
                         Each object should be a Filter class or its sub-class
-    attr_type           A type of attribute to map on filters
+    attr_type           A type of attribute to map on filters. Currently
+                        AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE is available.
     attr_value          A attribute value
-    attr_default_value  A default value for attribute if path doesn't match
     =================== ==================================================
     
     """
 
     ATTR_TYPE_LOCAL_PREFERENCE = '_local_pref'
 
-    def __init__(self, filters, attr_type, attr_value, attr_default_value=None):
+    def __init__(self, filters, attr_type, attr_value):
 
         assert all(isinstance(f, Filter) for f in filters),\
             'all the items in filters must be an instance of Filter sub-class'
         self.filters = filters
         self.attr_type = attr_type
         self.attr_value = attr_value
-        self.attr_default_value = attr_default_value
 
     def evaluate(self, path):
         result = False
@@ -1144,3 +1157,14 @@ class AttributeMap(object):
     def get_local_pref(self):
         local_pref_attr = BGPPathAttributeLocalPref(value=self.attr_value)
         return local_pref_attr
+
+    def clone(self):
+        """ This method clones AttributeMap object.
+
+        Returns AttributeMap object that has the same values with the
+        original one.
+
+        """
+
+        cloned_filters = [f.clone() for f in self.filters]
+        return self.__class__(cloned_filters, self.attr_type, self.attr_value)

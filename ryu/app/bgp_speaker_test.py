@@ -42,7 +42,14 @@ if __name__ == "__main__":
     attr_map_aspath3 = AttributeMap([aspath_filter], AttributeMap.ATTR_TYPE_LOCAL_PREFERENCE, 240)
 
     # set attribute map to neighbor
-    speaker.attribute_map_set('192.168.50.102', [attr_map_prefix, attr_map_aspath2, attr_map_aspath3])
-    
+    attr_maps = [attr_map_prefix, attr_map_aspath2, attr_map_aspath3]
+    speaker.attribute_map_set('192.168.50.102', attr_maps)
+
+    eventlet.sleep(5)
+    received_attr_maps = speaker.attribute_map_get('192.168.50.102')
+    print attr_maps
+    print '--------'
+    print received_attr_maps
+
     while True:
         eventlet.sleep(5)

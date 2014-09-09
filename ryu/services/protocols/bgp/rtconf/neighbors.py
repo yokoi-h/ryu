@@ -63,6 +63,7 @@ from ryu.services.protocols.bgp.utils.validation import is_valid_ipv4
 from ryu.services.protocols.bgp.utils.validation import is_valid_old_asn
 from ryu.services.protocols.bgp.info_base.base import Filter
 from ryu.services.protocols.bgp.info_base.base import PrefixFilter
+from ryu.services.protocols.bgp.info_base.base import AttributeMap
 
 LOG = logging.getLogger('bgpspeaker.rtconf.neighbor')
 
@@ -79,7 +80,7 @@ IN_FILTER = 'in_filter'
 OUT_FILTER = 'out_filter'
 IS_ROUTE_SERVER_CLIENT = 'is_route_server_client'
 CHECK_FIRST_AS = 'check_first_as'
-ROUTE_MAP = 'route_map'
+ATTRIBUTE_MAP = 'attribute_map'
 
 # Default value constants.
 DEFAULT_CAP_GR_NULL = True
@@ -213,6 +214,13 @@ def valid_filter(filter_):
     return SUPPORTED_FILTER_VALIDATORS[filter_['type']](filter_)
 
 
+def valid_attribute_map(attribute_map):
+    if not isinstance(attribute_map, AttributeMap):
+        raise ConfigTypeError(desc='Invalid AttributeMap: %s' % attribute_map)
+    else:
+        return attribute_map
+
+
 @validate(name=IN_FILTER)
 def validate_in_filters(filters):
     return [valid_filter(filter_) for filter_ in filters]
@@ -223,9 +231,10 @@ def validate_out_filters(filters):
     return [valid_filter(filter_) for filter_ in filters]
 
 
-@validate(name=ROUTE_MAP)
+@validate(name=ATTRIBUTE_MAP)
 def validate_attribute_maps(attribute_maps):
-    return [attribute_map for attribute_map in attribute_maps]
+    return [valid_attribute_map(attribute_map)
+            for attribute_map in attribute_maps]
 
 
 @validate(name=IS_ROUTE_SERVER_CLIENT)
