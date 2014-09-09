@@ -1171,7 +1171,6 @@ class AttributeMap(object):
 
     def __repr__(self):
 
-        filter_string = ','.join(self.filters)
-
+        filter_string = ','.join(repr(f) for f in self.filters)
         return 'AttributeMap(filters=[%s],as_number=%s,policy=%s)'\
                % (filter_string, self.attr_type, self.attr_value)
