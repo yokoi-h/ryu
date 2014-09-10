@@ -415,11 +415,14 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
     @property
     def attribute_maps(self):
-        return self._attribute_maps['original']
+        return self._attribute_maps['__orig']\
+            if '__orig' in self._attribute_maps else []
 
     @attribute_maps.setter
     def attribute_maps(self, attribute_maps):
         _attr_maps = {}
+        _attr_maps.setdefault('__orig', [])
+
         for a in attribute_maps:
             cloned = a.clone()
             LOG.debug("AttributeMap attr_type: %s, attr_value: %s",
@@ -427,7 +430,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             attr_list = _attr_maps.setdefault(cloned.attr_type, [])
             attr_list.append(cloned)
 
-        _attr_maps['original'] = attribute_maps
+            # preserve original order of attribute_maps
+            _attr_maps['__orig'].append(cloned)
+
         self._attribute_maps = _attr_maps
         self.on_update_attribute_maps()
 
