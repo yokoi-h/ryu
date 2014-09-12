@@ -37,6 +37,7 @@ from ryu.services.protocols.bgp.rtconf.neighbors import NeighborConfListener
 from ryu.services.protocols.bgp.signals.emit import BgpSignalBus
 from ryu.services.protocols.bgp.speaker import BgpProtocol
 from ryu.services.protocols.bgp.info_base.ipv4 import Ipv4Path
+from ryu.services.protocols.bgp.info_base.ipv6 import Ipv6Path
 from ryu.services.protocols.bgp.utils import bgp as bgp_utils
 from ryu.services.protocols.bgp.utils.evtlet import EventletIOFactory
 from ryu.services.protocols.bgp.utils import stats
@@ -922,6 +923,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                             if result:
                                 localpref_attr = m.get_attribute()
                                 break
+                LOG.debug('Path class: %s', path)
+                if isinstance(path, Ipv6Path):
+                    LOG.debug('IPv6 path: %s', path)
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)
