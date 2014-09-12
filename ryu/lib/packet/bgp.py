@@ -27,6 +27,7 @@ import six
 import struct
 import copy
 import netaddr
+import binascii
 
 from ryu.ofproto.ofproto_parser import msg_pack_into
 from ryu.lib.stringify import StringifyMixin
@@ -2014,6 +2015,10 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
         elif afi == addr_family.IP:
             next_hop = addrconv.ipv4.bin_to_text(next_hop_bin)
         elif afi == addr_family.IP6:
+            s = binascii.b2a_hex(next_hop_bin)
+            print '---------------------'
+            print s
+            print '---------------------'
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin)
         else:
             raise ValueError('Invalid address familly(%d)' % afi)
