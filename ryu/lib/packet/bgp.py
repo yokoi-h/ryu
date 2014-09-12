@@ -2019,6 +2019,12 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
             print '---------------------'
             print s
             print '---------------------'
+            if next_hop_len > 16:
+                next_hop_bin = next_hop_bin[:16]
+            s = binascii.b2a_hex(next_hop_bin)
+            print '---------------------'
+            print s
+            print '---------------------'
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin)
         else:
             raise ValueError('Invalid address familly(%d)' % afi)
