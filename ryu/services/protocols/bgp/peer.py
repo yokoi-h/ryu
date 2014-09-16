@@ -910,6 +910,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 # If the path doesn't match, we set default local-pref 100.
                 localpref_attr = BGPPathAttributeLocalPref(100)
                 # TODO handle VPNv4Path/VPNv6Path
+                LOG.debug('Path : %s', path)
                 if isinstance(path, (Ipv4Path, Ipv6Path)):
                     if AttributeMap.ATTR_LOCAL_PREF in self._attribute_maps:
                         maps = \
