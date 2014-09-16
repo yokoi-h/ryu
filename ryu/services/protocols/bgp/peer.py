@@ -929,6 +929,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 elif isinstance(path, Vpnv4Path):
                     nlri = nlri_list[0]
                     LOG.debug('nlri.route_dist : %s', nlri.route_dist)
+                    LOG.debug('nlri.prefix : %s', nlri.prefix)
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)
