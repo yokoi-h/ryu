@@ -923,9 +923,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                             if result:
                                 localpref_attr = m.get_attribute()
                                 break
-                LOG.debug('Path class: %s', path)
-                if isinstance(path, Ipv6Path):
-                    LOG.debug('IPv6 path: %s', path)
 
 
             # COMMUNITY Attribute.
