@@ -930,6 +930,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                     nlri = nlri_list[0]
                     LOG.debug('nlri.route_dist : %s', nlri.route_dist)
                     LOG.debug('nlri.prefix : %s', nlri.prefix)
+                    LOG.debug('AS_PATH : %s', path_seg_list)
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)
