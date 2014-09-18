@@ -153,8 +153,10 @@ def set_neighbor_in_filter(neigh_ip_address, filters):
 
 @RegisterWithArgChecks(name='neighbor.attribute_map.set',
                        req_args=[neighbors.IP_ADDRESS,
-                                 neighbors.ATTRIBUTE_MAP])
-def set_neighbor_attribute_map(neigh_ip_address, at_maps, **kwargs):
+                                 neighbors.ATTRIBUTE_MAP],
+                       opt_args=[ROUTE_DISTINGUISHER, VRF_RF])
+def set_neighbor_attribute_map(neigh_ip_address, at_maps,
+                               route_dist=None, route_family=VRF_RF_IPV4):
     """set attribute_maps to the neighbor."""
     core = CORE_MANAGER.get_core_service()
     peer = core.peer_manager.get_by_addr(neigh_ip_address)
@@ -162,12 +164,10 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps, **kwargs):
     at_maps_key = const.ATTR_MAPS_LABEL_DEFAULT
     at_maps_dict = {}
 
-    route_dist = kwargs.get(ROUTE_DISTINGUISHER)
     if route_dist is not None:
-        vrf_rf = kwargs.get(VRF_RF)
-        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, vrf_rf)
+        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, route_family)
         if vrf_conf:
-            at_maps_key = ':'.join([route_dist, vrf_rf])
+            at_maps_key = ':'.join([route_dist, route_family])
         else:
             raise RuntimeConfigError(desc='No VrfConf with rd %s' %
                                  route_dist)
@@ -180,7 +180,8 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps, **kwargs):
 
 
 @RegisterWithArgChecks(name='neighbor.attribute_map.get',
-                       req_args=[neighbors.IP_ADDRESS])
+                       req_args=[neighbors.IP_ADDRESS],
+                       opt_args=[ROUTE_DISTINGUISHER, VRF_RF])
 def get_neighbor_attribute_map(neigh_ip_address):
     """Returns a neighbor attribute_map for given ip address if exists."""
     core = CORE_MANAGER.get_core_service()
