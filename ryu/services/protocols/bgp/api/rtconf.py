@@ -29,6 +29,7 @@ from ryu.services.protocols.bgp.rtconf.vrfs import ROUTE_DISTINGUISHER
 from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF
 from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4
 from ryu.services.protocols.bgp.rtconf.vrfs import VrfConf
+from ryu.services.protocols.bgp import constants as const
 
 LOG = logging.getLogger('bgpspeaker.api.rtconf')
 
@@ -153,11 +154,28 @@ def set_neighbor_in_filter(neigh_ip_address, filters):
 @RegisterWithArgChecks(name='neighbor.attribute_map.set',
                        req_args=[neighbors.IP_ADDRESS,
                                  neighbors.ATTRIBUTE_MAP])
-def set_neighbor_attribute_map(neigh_ip_address, attribute_maps):
-    """Returns a neighbor attribute_map for given ip address if exists."""
+def set_neighbor_attribute_map(neigh_ip_address, at_maps, **kwargs):
+    """set attribute_maps to the neighbor."""
     core = CORE_MANAGER.get_core_service()
     peer = core.peer_manager.get_by_addr(neigh_ip_address)
-    peer.attribute_maps = attribute_maps
+
+    at_maps_key = const.ATTR_MAPS_LABEL_DEFAULT
+    at_maps_dict = {}
+
+    route_dist = kwargs.get(ROUTE_DISTINGUISHER)
+    if route_dist is not None:
+        vrf_rf = kwargs.get(VRF_RF)
+        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, vrf_rf)
+        if vrf_conf:
+            at_maps_key = ':'.join([route_dist, vrf_rf])
+        else:
+            raise RuntimeConfigError(desc='No VrfConf with rd %s' %
+                                 route_dist)
+
+    at_maps_dict[const.ATTR_MAPS_LABEL_KEY] = at_maps_key
+    at_maps_dict[const.ATTR_MAPS_VALUE] = at_maps
+    peer.attribute_maps = at_maps_dict
+
     return True
 
 
@@ -166,7 +184,8 @@ def set_neighbor_attribute_map(neigh_ip_address, attribute_maps):
 def get_neighbor_attribute_map(neigh_ip_address):
     """Returns a neighbor attribute_map for given ip address if exists."""
     core = CORE_MANAGER.get_core_service()
-    ret = core.peer_manager.get_by_addr(neigh_ip_address).attribute_maps
+    peer = core.peer_manager.get_by_addr(neigh_ip_address)
+    ret = peer.attribute_maps
     return ret
 
 # =============================================================================

@@ -417,15 +417,31 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
     @property
     def attribute_maps(self):
-        return self._attribute_maps['__orig']\
-            if '__orig' in self._attribute_maps else []
+        return self._attribute_maps
+
+    def attribute_maps_vrf(self, vrf_key):
+        at_maps = self._attribute_maps[vrf_key]
+        return at_maps[const.ATTR_MAPS_ORG_KEY]\
+            if const.ATTR_MAPS_ORG_KEY in at_maps else []
+
+    def get_attribute_map(self, vrf_key=None):
+        key = vrf_key if vrf_key is not None \
+            else const.ATTR_MAPS_LABEL_DEFAULT
+        at_maps = self._attribute_maps[key]
+        return at_maps[const.ATTR_MAPS_ORG_KEY]\
+            if const.ATTR_MAPS_ORG_KEY in at_maps else []
+
 
     @attribute_maps.setter
     def attribute_maps(self, attribute_maps):
         _attr_maps = {}
-        _attr_maps.setdefault('__orig', [])
+        _attr_maps.setdefault(const.ATTR_MAPS_ORG_KEY, [])
 
-        for a in attribute_maps:
+        # key is 'default' or rd_rf that represents RD and route_family
+        key = attribute_maps[const.ATTR_MAPS_LABEL_KEY]
+        at_maps = attribute_maps[const.ATTR_MAPS_VALUE]
+
+        for a in at_maps:
             cloned = a.clone()
             LOG.debug("AttributeMap attr_type: %s, attr_value: %s",
                       cloned.attr_type, cloned.attr_value)
@@ -433,9 +449,9 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             attr_list.append(cloned)
 
             # preserve original order of attribute_maps
-            _attr_maps['__orig'].append(cloned)
+            _attr_maps[const.ATTR_MAPS_ORG_KEY].append(cloned)
 
-        self._attribute_maps = _attr_maps
+        self._attribute_maps[key] = _attr_maps
         self.on_update_attribute_maps()
 
     def is_mpbgp_cap_valid(self, route_family):
@@ -910,27 +926,23 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 # attribute_maps and set local-pref value.
                 # If the path doesn't match, we set default local-pref 100.
                 localpref_attr = BGPPathAttributeLocalPref(100)
-                # TODO handle VPNv4Path/VPNv6Path
                 LOG.debug('Path : %s', path)
                 LOG.debug('instance name : %s', path.__class__.__name__)
-                if isinstance(path, (Ipv4Path, Ipv6Path)):
-                    if AttributeMap.ATTR_LOCAL_PREF in self._attribute_maps:
-                        maps = \
-                            self._attribute_maps[AttributeMap.ATTR_LOCAL_PREF]
-                        for m in maps:
-                            cause, result = m.evaluate(path)
-                            LOG.debug(
-                                "local_pref evaluation result:%s, cause:%s",
-                                result, cause)
+                key = const.ATTR_MAPS_LABEL_DEFAULT
 
-                            if result:
-                                localpref_attr = m.get_attribute()
-                                break
-                elif isinstance(path, Vpnv4Path):
+                if isinstance(path, Vpnv4Path):
                     nlri = nlri_list[0]
                     LOG.debug('nlri.route_dist : %s', nlri.route_dist)
                     LOG.debug('nlri.prefix : %s', nlri.prefix)
                     LOG.debug('AS_PATH : %s', path_seg_list)
+                    key = ':'.join([nlri.route_dist, RF_IPv4_VPN])
+
+                attr_type = AttributeMap.ATTR_LOCAL_PREF
+                at_maps = self._attribute_maps.get(key, {})
+                result = self._lookup_attribute_map(at_maps, attr_type, path)
+                if result:
+                    localpref_attr = result
+
 
             # COMMUNITY Attribute.
             community_attr = pathattr_map.get(BGP_ATTR_TYPE_COMMUNITIES)
@@ -1981,3 +1993,18 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
             if self._neigh_conf.enabled:
                 if not self._connect_retry_event.is_set():
                     self._connect_retry_event.set()
+
+    @staticmethod
+    def _lookup_attribute_map(attribute_map, attr_type, path):
+        result_attr = None
+        if attr_type in attribute_map:
+            maps = attribute_map[attr_type]
+            for m in maps:
+                cause, result = m.evaluate(path)
+                LOG.debug(
+                    "local_pref evaluation result:%s, cause:%s",
+                    result, cause)
+                if result:
+                    result_attr = m.get_attribute()
+                    break
+        return result_attr
