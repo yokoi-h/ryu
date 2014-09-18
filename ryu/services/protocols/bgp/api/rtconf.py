@@ -172,7 +172,7 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps,
         rf = RF_IPv4_VPN if route_family == VRF_RF_IPV4 else RF_IPv6_VPN
         print CORE_MANAGER.vrfs_conf.vrf_confs
         print rf
-        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, rf)
+        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, route_family)
         if vrf_conf:
             at_maps_key = ':'.join([route_dist, route_family])
         else:
