@@ -404,9 +404,6 @@ class VrfsConf(BaseConf):
     def vrf_confs(self):
         """Returns a list of configured `VrfConf`s
         """
-        for key, value in self._vrfs_by_rd_rf.items():
-            print key
-            print value
 
         return self._vrfs_by_rd_rf.values()
 
@@ -495,9 +492,6 @@ class VrfsConf(BaseConf):
             vrf = vrf1
         elif route_dist is not None:
             rd_rf_id = VrfConf.create_rd_rf_id(route_dist, vrf_rf)
-            print '-----'
-            print rd_rf_id
-            print '-----'
             vrf = self._vrfs_by_rd_rf.get(rd_rf_id)
         else:
             vrf = self._vrfs_by_id.get(vrf_id)
