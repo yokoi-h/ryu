@@ -31,6 +31,9 @@ from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4
 from ryu.services.protocols.bgp.rtconf.vrfs import VrfConf
 from ryu.services.protocols.bgp import constants as const
 
+from ryu.lib.packet.bgp import RF_IPv4_VPN
+from ryu.lib.packet.bgp import RF_IPv6_VPN
+
 LOG = logging.getLogger('bgpspeaker.api.rtconf')
 
 
@@ -166,7 +169,7 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps,
 
     if route_dist is not None:
 
-        rf = VrfConf.vrf_rf_2_rf(route_family)
+        rf = RF_IPv4_VPN if route_family == VRF_RF_IPV4 else RF_IPv6_VPN
         print CORE_MANAGER.vrfs_conf.vrf_confs
         print rf
         vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, rf)
