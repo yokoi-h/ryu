@@ -566,7 +566,7 @@ class BGPSpeaker(object):
         param[neighbors.ATTRIBUTE_MAP] = attribute_maps
         if route_dist is not None:
             param[vrfs.ROUTE_DISTINGUISHER] = route_dist
-            param[vrfs.VRF_RF] = route_dist
+            param[vrfs.VRF_RF] = route_family
         call(func_name, **param)
 
     def attribute_map_get(self, address, route_dist=None, route_family=RF_VPN_V4):
