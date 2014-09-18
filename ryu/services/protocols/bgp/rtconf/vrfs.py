@@ -404,6 +404,10 @@ class VrfsConf(BaseConf):
     def vrf_confs(self):
         """Returns a list of configured `VrfConf`s
         """
+        for key, value in self._vrfs_by_rd_rf.items():
+            print key
+            print value
+
         return self._vrfs_by_rd_rf.values()
 
     @property
