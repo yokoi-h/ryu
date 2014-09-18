@@ -185,12 +185,17 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps,
 @RegisterWithArgChecks(name='neighbor.attribute_map.get',
                        req_args=[neighbors.IP_ADDRESS],
                        opt_args=[ROUTE_DISTINGUISHER, VRF_RF])
-def get_neighbor_attribute_map(neigh_ip_address):
+def get_neighbor_attribute_map(neigh_ip_address,route_dist=None,
+                               route_family=VRF_RF_IPV4):
     """Returns a neighbor attribute_map for given ip address if exists."""
     core = CORE_MANAGER.get_core_service()
     peer = core.peer_manager.get_by_addr(neigh_ip_address)
-    ret = peer.attribute_maps
-    return ret
+    at_maps_key = const.ATTR_MAPS_LABEL_DEFAULT
+
+    if route_dist is not None:
+        at_maps_key = ':'.join([route_dist, route_family])
+    at_maps = peer.attribute_maps.get(at_maps_key)
+    return at_maps.get(const.ATTR_MAPS_ORG_KEY)
 
 # =============================================================================
 # VRF configuration related APIs
