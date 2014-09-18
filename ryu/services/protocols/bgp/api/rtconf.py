@@ -195,7 +195,10 @@ def get_neighbor_attribute_map(neigh_ip_address,route_dist=None,
     if route_dist is not None:
         at_maps_key = ':'.join([route_dist, route_family])
     at_maps = peer.attribute_maps.get(at_maps_key)
-    return at_maps.get(const.ATTR_MAPS_ORG_KEY)
+    if at_maps:
+        return at_maps.get(const.ATTR_MAPS_ORG_KEY)
+    else:
+        return []
 
 # =============================================================================
 # VRF configuration related APIs
