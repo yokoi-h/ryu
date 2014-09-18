@@ -97,7 +97,7 @@ class ConfigurationManager(CommonConfListener, VrfsConfListener,
         # Remove AttributeMaps under the removed vrf
         rd = vrf_conf.route_dist
         rf = vrf_conf.route_family
-        peers = self._peer_manager.iterpeers()
+        peers = self._peer_manager.iterpeers
         for peer in peers:
             key = ':'.join([rd, rf])
             peer.attribute_maps.pop(key, None)
