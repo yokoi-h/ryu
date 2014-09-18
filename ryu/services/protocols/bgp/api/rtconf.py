@@ -165,8 +165,10 @@ def set_neighbor_attribute_map(neigh_ip_address, at_maps,
     at_maps_dict = {}
 
     if route_dist is not None:
+
+        rf = VrfConf.vrf_rf_2_rf(route_family)
         print CORE_MANAGER.vrfs_conf.vrf_confs
-        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, route_family)
+        vrf_conf = CORE_MANAGER.vrfs_conf.get_vrf_conf(route_dist, rf)
         if vrf_conf:
             at_maps_key = ':'.join([route_dist, route_family])
         else:
