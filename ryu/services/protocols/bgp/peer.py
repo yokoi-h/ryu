@@ -37,8 +37,8 @@ from ryu.services.protocols.bgp.rtconf.neighbors import NeighborConfListener
 from ryu.services.protocols.bgp.signals.emit import BgpSignalBus
 from ryu.services.protocols.bgp.speaker import BgpProtocol
 from ryu.services.protocols.bgp.info_base.ipv4 import Ipv4Path
-from ryu.services.protocols.bgp.info_base.ipv6 import Ipv6Path
 from ryu.services.protocols.bgp.info_base.vpnv4 import Vpnv4Path
+from ryu.services.protocols.bgp.info_base.vpnv4 import Vpnv6Path
 from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4, VRF_RF_IPV6
 from ryu.services.protocols.bgp.utils import bgp as bgp_utils
 from ryu.services.protocols.bgp.utils.evtlet import EventletIOFactory
@@ -927,16 +927,13 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                 # attribute_maps and set local-pref value.
                 # If the path doesn't match, we set default local-pref 100.
                 localpref_attr = BGPPathAttributeLocalPref(100)
-                LOG.debug('Path : %s', path)
-                LOG.debug('instance name : %s', path.__class__.__name__)
                 key = const.ATTR_MAPS_LABEL_DEFAULT
 
-                if isinstance(path, Vpnv4Path):
+                if isinstance(path, (Vpnv4Path, Vpnv6Path)):
                     nlri = nlri_list[0]
-                    LOG.debug('nlri.route_dist : %s', nlri.route_dist)
-                    LOG.debug('nlri.prefix : %s', nlri.prefix)
-                    LOG.debug('AS_PATH : %s', path_seg_list)
-                    key = ':'.join([nlri.route_dist, VRF_RF_IPV4])
+                    rf = VRF_RF_IPV4 if isinstance(path, Vpnv4Path)\
+                        else VRF_RF_IPV6
+                    key = ':'.join([nlri.route_dist, rf])
 
                 attr_type = AttributeMap.ATTR_LOCAL_PREF
                 at_maps = self._attribute_maps.get(key, {})
