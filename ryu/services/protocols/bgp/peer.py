@@ -38,7 +38,7 @@ from ryu.services.protocols.bgp.signals.emit import BgpSignalBus
 from ryu.services.protocols.bgp.speaker import BgpProtocol
 from ryu.services.protocols.bgp.info_base.ipv4 import Ipv4Path
 from ryu.services.protocols.bgp.info_base.vpnv4 import Vpnv4Path
-from ryu.services.protocols.bgp.info_base.vpnv4 import Vpnv6Path
+from ryu.services.protocols.bgp.info_base.vpnv6 import Vpnv6Path
 from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4, VRF_RF_IPV6
 from ryu.services.protocols.bgp.utils import bgp as bgp_utils
 from ryu.services.protocols.bgp.utils.evtlet import EventletIOFactory
