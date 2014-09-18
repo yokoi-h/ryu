@@ -39,6 +39,7 @@ from ryu.services.protocols.bgp.speaker import BgpProtocol
 from ryu.services.protocols.bgp.info_base.ipv4 import Ipv4Path
 from ryu.services.protocols.bgp.info_base.ipv6 import Ipv6Path
 from ryu.services.protocols.bgp.info_base.vpnv4 import Vpnv4Path
+from ryu.services.protocols.bgp.rtconf.vrfs import VRF_RF_IPV4, VRF_RF_IPV6
 from ryu.services.protocols.bgp.utils import bgp as bgp_utils
 from ryu.services.protocols.bgp.utils.evtlet import EventletIOFactory
 from ryu.services.protocols.bgp.utils import stats
@@ -935,7 +936,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                     LOG.debug('nlri.route_dist : %s', nlri.route_dist)
                     LOG.debug('nlri.prefix : %s', nlri.prefix)
                     LOG.debug('AS_PATH : %s', path_seg_list)
-                    key = ':'.join([nlri.route_dist, RF_IPv4_VPN])
+                    key = ':'.join([nlri.route_dist, VRF_RF_IPV4])
 
                 attr_type = AttributeMap.ATTR_LOCAL_PREF
                 at_maps = self._attribute_maps.get(key, {})
