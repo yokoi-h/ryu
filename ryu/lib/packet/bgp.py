@@ -2014,14 +2014,16 @@ class BGPPathAttributeMpReachNLRI(_PathAttribute):
         elif afi == addr_family.IP:
             next_hop = addrconv.ipv4.bin_to_text(next_hop_bin)
         elif afi == addr_family.IP6:
-            # hext_hop_bin can include global address and link-local address
+            # next_hop_bin can include global address and link-local address
             # according to RFC2545. Since a link-local address isn't needed in
             # Ryu BGPSpeaker, we ignore it if both address was sent.
-            # The link-local address follows after a global address,
+            # The link-local address is supposed to follow after
+            # a global address and next_hop_len will be 32 bytes,
             # so we use the first 16 bytes, which is a global address,
-            # as a next_hop.
-            if next_hop_len > 16:
+            # as a next_hop and change next_hop_len to 16.
+            if next_hop_len == 32:
                 next_hop_bin = next_hop_bin[:16]
+                next_hop_len = 16
             next_hop = addrconv.ipv6.bin_to_text(next_hop_bin)
         else:
             raise ValueError('Invalid address familly(%d)' % afi)
