@@ -218,8 +218,8 @@ class BGPSpeaker(object):
         ``is_route_server_client`` specifies whether this neighbor is a
         router server's client or not.
 
-        ``is_next_hop_self`` specifies whether this neighbor announces
-        its own ip address or not.
+        ``is_next_hop_self`` specifies whether the BGP speaker announces
+        its own interface ip address to iBGP neighbor or not.
         """
         bgp_neighbor = {}
         bgp_neighbor[neighbors.IP_ADDRESS] = address
