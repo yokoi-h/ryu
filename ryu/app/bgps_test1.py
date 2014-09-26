@@ -19,7 +19,8 @@ if __name__ == "__main__":
 
     speaker.neighbor_add('192.168.101.101', 65010, enable_ipv4=True, enable_vpnv4=True, multi_exit_disc=100)
     speaker.neighbor_add('192.168.104.102', 65011, enable_ipv4=True, enable_vpnv4=True, next_hop='10.0.1.1')
-    speaker.neighbor_add('10.0.1.3', 65011, enable_ipv4=True, enable_vpnv4=True, next_hop='10.0.1.1')
+    speaker.neighbor_add('10.0.1.3', 65011, enable_ipv4=True, enable_vpnv4=True, next_hop='10.0.1.1',
+                         is_next_hop_self=True)
     rd1 = '65010:101'
     speaker.vrf_add(rd1, [rd1], [rd1])
     eventlet.sleep(5)
