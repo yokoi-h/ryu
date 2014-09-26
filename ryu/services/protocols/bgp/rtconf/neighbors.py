@@ -256,6 +256,14 @@ def validate_check_first_as(check_first_as):
 
     return check_first_as
 
+@validate(name=IS_NEXT_HOP_SELF)
+def validate_is_next_hop_self(is_next_hop_self):
+    if is_next_hop_self not in (True, False):
+        raise ConfigValueError(desc='Invalid is_next_hop_self(%s)' %
+                               is_next_hop_self)
+
+    return is_next_hop_self
+
 
 class NeighborConf(ConfWithId, ConfWithStats):
     """Class that encapsulates one neighbors' configuration."""
