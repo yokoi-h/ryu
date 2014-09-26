@@ -836,6 +836,8 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                     next_hop = self.host_bind_ip
                     if path.route_family == RF_IPv6_VPN:
                         next_hop = self._ipv4_mapped_ipv6(next_hop)
+                    LOG.debug('using %s as a next_hop address instead'
+                              ' of path.nexthop %s' % (next_hop, path.nexthop))
                 else:
                     next_hop = path.nexthop
 
