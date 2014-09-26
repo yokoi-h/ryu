@@ -275,7 +275,8 @@ class NeighborConf(ConfWithId, ConfWithStats):
                                    LOCAL_ADDRESS, LOCAL_PORT,
                                    PEER_NEXT_HOP, PASSWORD,
                                    IN_FILTER, OUT_FILTER,
-                                   IS_ROUTE_SERVER_CLIENT, CHECK_FIRST_AS])
+                                   IS_ROUTE_SERVER_CLIENT, CHECK_FIRST_AS,
+                                   IS_NEXT_HOP_SELF])
 
     def __init__(self, **kwargs):
         super(NeighborConf, self).__init__(**kwargs)
